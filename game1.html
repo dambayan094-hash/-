@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ku">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>یاری یەکەم - ماڵی هاوڕیان</title>
+<link rel="stylesheet" href="style-common.css">
+<style>
+.slot-machine{background:rgba(0,0,0,0.5);border-radius:40px;padding:15px;border:1px solid #facc15;}
+.slot-box{position:relative;height:120px;background:#020617;border-radius:28px;overflow:hidden;}
+.pointer{position:absolute;top:-18px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:22px solid transparent;border-right:22px solid transparent;border-bottom:38px solid #facc15;z-index:20;}
+.track{display:flex;position:absolute;left:0;top:0;height:100%;}
+.item{min-width:260px;display:flex;justify-content:center;align-items:center;font-size:1rem;font-weight:bold;padding:0 20px;background:#1e293b;color:#e2e8f0;border-right:2px solid #facc15;}
+.spin-btn{background:linear-gradient(145deg,#facc15,#eab308);border:none;padding:16px 42px;font-size:1.4rem;font-weight:bold;color:#0f172a;border-radius:60px;cursor:pointer;margin:30px auto 0;display:block;}
+.result-card{background:rgba(0,0,0,0.5);border-radius:28px;padding:18px;margin-top:15px;text-align:center;}
+.result-value{font-size:1.5rem;font-weight:bold;color:#facc15;}
+.user-info{text-align:center;margin:10px 0;color:#facc15;}
+.back-home{position:absolute;top:20px;left:20px;background:rgba(0,0,0,0.5);border-radius:30px;padding:8px 16px;color:#facc15;text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<div class="moon"></div>
+<div class="container">
+    <a href="index.html" class="back-home">🏠 ← گەڕانەوە</a>
+    <div class="user-info" id="userInfo"></div>
+    <div class="glow-text"><h1>🏠 ماڵی هاوڕیان ✨</h1><div class="sub">خولانەوە و بەخت هەڵبژێرە</div></div>
+    <div class="question-card"><div class="question-label">📌 پرسیار</div><div class="question-text" id="questionBox">🎰 کلیکی SPIN بکە</div></div>
+    <div class="slot-machine"><div class="slot-box"><div class="pointer"></div><div class="track" id="track"></div></div></div>
+    <button class="spin-btn" id="spinBtn">🎰 SPIN 🌀</button>
+    <div class="result-card"><div class="result-label">🎯 ئەنجام</div><div class="result-value" id="result">چاوەڕێی خولانەوە...</div></div>
+</div>
+
+<script>
+const users = {"مەڕوا":"1234","محمد":"1234","ئەشڕەف":"1234","ژوان":"1234"};
+let currentUser = localStorage.getItem('currentUser');
+if(!currentUser || !users[currentUser]) window.location.href='login.html';
+document.getElementById('userInfo').innerHTML = `👤 ${currentUser}`;
+
+const questions=["☕ کێ زۆرترین قاوە دەخواتەوە؟","📖 کێ زۆرترین کتێب دەخوێنێتەوە؟","🎮 کێ زۆرترین یاری دەکات؟","🚗 کێ باشتر شۆفێری دەکات؟","💪 کێ وەرزشوانترە؟","🛌 کێ زۆرترین دەخەوێت؟","💰 کێ خەرجی زۆرتر دەکات؟","🎤 کێ دەنگی جوانترە؟"];
+const names=["مەڕوا","محمد","ئەشڕەف","ژوان"];
+const nameEmojis=["🌟","🔥","🎭","💎"];
+const track=document.getElementById("track");const questionBox=document.getElementById("questionBox");
+const resultDiv=document.getElementById("result");const spinBtn=document.getElementById("spinBtn");
+let qList=[];let spinning=false;
+for(let i=0;i<25;i++){questions.forEach(q=>{qList.push(q);const div=document.createElement("div");div.className="item";div.innerText=q;track.appendChild(div);});}
+function getRandomName(){const idx=Math.floor(Math.random()*names.length);return{name:names[idx],emoji:nameEmojis[idx]};}
+function spin(){
+    if(spinning)return;spinning=true;spinBtn.disabled=true;
+    document.querySelector(".slot-box").classList.add("spinning-effect");
+    const rIdx=Math.floor(Math.random()*qList.length);const selectedQ=qList[rIdx];const p=getRandomName();
+    const iW=260;const sBox=document.querySelector(".slot-box");const sW=sBox.offsetWidth;
+    const cOff=(sW/2)-(iW/2);const fPos=(rIdx*iW)-cOff;
+    track.style.transition="none";track.style.transform="translateX(0px)";
+    questionBox.innerText="⚡ خولانەوە...";resultDiv.innerText="🌀 چاوەڕێ بە...";
+    setTimeout(()=>{track.style.transition="transform 4.5s cubic-bezier(0.2,0.9,0.1,1.05)";track.style.transform=`translateX(-${fPos}px)`;},30);
+    setTimeout(()=>{questionBox.innerText=selectedQ;resultDiv.innerHTML=`${p.emoji} ${p.name} ${p.emoji}`;
+    document.querySelector(".slot-box").classList.remove("spinning-effect");spinning=false;spinBtn.disabled=false;
+    resultDiv.style.transform="scale(1.08)";setTimeout(()=>{resultDiv.style.transform="";},250);},4700);
+}
+spinBtn.addEventListener("click",spin);
+window.addEventListener("load",()=>{const fI=3;const iW=260;const bW=document.querySelector(".slot-box").offsetWidth;const cOff=(bW/2)-(iW/2);track.style.transition="none";track.style.transform=`translateX(-${(fI*iW)-cOff}px)`;});
+function genStars(){
+    const sc=document.getElementById('stars');
+    for(let i=0;i<160;i++){const s=document.createElement('div');s.classList.add('star');let sz=Math.random()*3+1;s.style.width=sz+'px';s.style.height=sz+'px';s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';s.style.animationDelay=Math.random()*5+'s';s.style.animationDuration=(Math.random()*3+1.5)+'s';if(sz>2)s.style.boxShadow='0 0 4px white';sc.appendChild(s);}
+}
+genStars();
+</script>
+</body>
+</html>

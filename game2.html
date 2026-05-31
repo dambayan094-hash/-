@@ -5,103 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>یاری زانیاری ئۆنلاین</title>
     
-    <!-- کۆدی ئایکۆن بۆ ئەوەی لەسەر شاشەی مۆبایل وێنەیەکی جوانی هەبێت -->
     <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/240/controller.png">
     <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/240/controller.png">
     <meta name="theme-color" content="#050a18">
 
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        /* --- CSS دیزاین --- */
+        *{margin:0;padding:0;box-sizing:border-box;}
         body {
             margin: 0; padding: 20px;
             background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
             color: white; font-family: 'Segoe UI', Tahoma, sans-serif;
             display: flex; justify-content: center; align-items: center;
-            min-height: 100vh; overflow-x: hidden; direction: rtl;
+            min-height: 100vh; overflow-x: hidden;
         }
-        
-        /* باکگراوندی ئەستێرەکان */
-        .stars-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0; pointer-events: none;
-        }
-        .star {
-            position: absolute; background: white; border-radius: 50%;
-            opacity: 0.5; animation: twinkle var(--duration) infinite;
-        }
+        .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.5; animation: twinkle var(--duration) infinite; }
         @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-
-        .main-wrapper { width: 100%; max-width: 500px; z-index: 10; }
-
-        /* لۆگۆی ناو بەرنامە (SVG) */
-        .app-logo-svg {
-            width: 80px; height: 80px; margin: 0 auto 15px auto;
-            display: block; filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.5));
-        }
-
-        .game-card {
-            background-color: rgba(11, 17, 32, 0.96);
-            border: 1px solid #1e293b; border-radius: 30px;
-            padding: 25px; box-shadow: 0 0 50px rgba(0,0,0,0.8);
-            position: relative; backdrop-filter: blur(10px);
-        }
-
+        .main-wrapper { width: 100%; max-width: 500px; z-index: 10; position: relative; }
+        .game-card { background-color: rgba(11, 17, 32, 0.96); border: 1px solid #1e293b; border-radius: 30px; padding: 25px; box-shadow: 0 0 50px rgba(0,0,0,0.8); backdrop-filter: blur(10px); }
         .user-name-top { color: #facc15; font-weight: bold; margin-bottom: 15px; text-align: center; font-size: 18px; }
-
         .score-container { display: flex; gap: 12px; margin-bottom: 25px; }
-        .score-box {
-            flex: 1; border: 2px solid #334155; border-radius: 20px;
-            padding: 15px; text-align: center; transition: 0.3s; background: rgba(255,255,255,0.02);
-        }
-        .score-box.active { border-color: #facc15; box-shadow: 0 0 15px rgba(250, 204, 21, 0.2); }
+        .score-box { flex: 1; border: 2px solid #334155; border-radius: 20px; padding: 15px; text-align: center; background: rgba(255,255,255,0.02); }
+        .score-box.active { border-color: #facc15; box-shadow: 0 0 15px rgba(250,204,21,0.2); }
         .player-label { font-weight: bold; color: #facc15; font-size: 14px; margin-bottom: 5px; }
         .score-val { font-size: 35px; font-weight: bold; margin: 5px 0; }
-
-        .question-area {
-            border: 1px solid #facc15; border-radius: 25px;
-            padding: 20px; margin-bottom: 20px; background: rgba(0,0,0,0.2);
-        }
+        .question-area { border: 1px solid #facc15; border-radius: 25px; padding: 20px; margin-bottom: 20px; background: rgba(0,0,0,0.2); }
         .timer-box { font-size: 26px; color: #facc15; margin-bottom: 15px; font-weight: bold; }
         .q-text { font-size: 20px; line-height: 1.6; margin-bottom: 25px; min-height: 60px; }
-
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .option-btn {
-            background: transparent; border: 1px solid #334155; color: #94a3b8;
-            padding: 15px 10px; border-radius: 50px; cursor: pointer;
-            font-size: 14px; transition: 0.2s; font-family: inherit; outline: none;
-        }
+        .option-btn { background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 15px 10px; border-radius: 50px; cursor: pointer; font-size: 14px; transition: 0.2s; }
         .option-btn:hover:not(:disabled) { border-color: #facc15; color: white; }
-        .option-btn.selected { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); color: white; }
-        .option-btn.correct { background: #166534 !important; border-color: #4ade80 !important; color: white; animation: shake 0.5s; }
-        .option-btn.wrong { background: #991b1b !important; border-color: #f87171 !important; color: white; }
-
-        .action-btn {
-            width: 100%; padding: 16px; border-radius: 50px; border: none;
-            font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; font-family: inherit;
-        }
+        .option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .action-btn { width: 100%; padding: 16px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
         .create-btn { background: #3b82f6; color: white; }
         .join-btn { background: #10b981; color: white; }
         .start-btn { background: #8b5cf6; color: white; }
         .exit-btn { background: #e11d48; color: white; margin-top: 20px; }
-
-        input {
-            width: 100%; padding: 16px; background: #050a18; border: 1px solid #334155;
-            border-radius: 50px; color: white; text-align: center; box-sizing: border-box; font-size: 18px; margin-top: 10px; outline: none;
+        input { width: 100%; padding: 16px; background: #050a18; border: 1px solid #334155; border-radius: 50px; color: white; text-align: center; font-size: 18px; margin-top: 10px; }
+        .back-btn { 
+            display: inline-block; 
+            background: rgba(0,0,0,0.6); 
+            border: 1px solid #facc15; 
+            color: #facc15; 
+            padding: 8px 16px; 
+            border-radius: 40px; 
+            font-size: 13px; 
+            cursor: pointer; 
+            text-decoration: none;
+            margin-bottom: 15px;
+            text-align: center;
         }
-
-        .back-btn-mini { 
-            position: absolute; top: 15px; right: 15px; 
-            background: rgba(255,255,255,0.05); border: 1px solid #334155; 
-            color: #facc15; padding: 5px 12px; border-radius: 50px; 
-            font-size: 12px; cursor: pointer; text-decoration: none;
-        }
-        .back-btn-mini:hover { background: rgba(250, 204, 21, 0.2); border-color: #facc15; }
-
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(5px); } 75% { transform: translateX(-5px); } }
+        .back-btn:hover { background: rgba(250,204,21,0.2); }
+        .text-center { text-align: center; }
+        .mb-15 { margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -109,51 +68,41 @@
     <div class="stars-container" id="starsCont"></div>
 
     <div class="main-wrapper">
-        <!-- لۆگۆی SVG کە هەرگیز ڕەش نابێت -->
-        <div class="app-logo-svg">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <rect width="100" height="100" rx="20" fill="#0b1120"/>
-                <rect x="5" y="5" width="90" height="90" rx="15" fill="none" stroke="#facc15" stroke-width="3"/>
-                <path d="M30 60 L30 45 Q30 35 50 35 Q70 35 70 45 L70 60" fill="none" stroke="#3b82f6" stroke-width="5" stroke-linecap="round"/>
-                <path d="M35 55 L45 55 M40 50 L40 60 M55 55 A2 2 0 1 0 59 55 A2 2 0 1 0 55 55 M63 55 A2 2 0 1 0 67 55" stroke="white" stroke-width="2"/>
-                <path d="M45 20 L55 20 L55 25 L45 25 Z M50 12 L55 20 L45 20 Z" fill="#facc15"/>
-            </svg>
-        </div>
-
         <div id="userInfoHeader" class="user-name-top"></div>
 
         <!-- Screen 1: Start -->
         <div id="roomSection" class="game-card">
+            <a href="index.html" class="back-btn">🏠 گەڕانەوە بۆ سەرەکی</a>
             <h2 style="color: #3b82f6; margin-bottom: 25px;">🎮 یاری زانیاری ئۆنلاین</h2>
             <button id="createRoomBtn" class="action-btn create-btn">دروستکردنی ژوور</button>
-            <div style="margin: 20px 0; color: #475569; font-weight: bold;">— یان —</div>
+            <div style="margin: 20px 0; color: #475569; text-align: center;">— یان —</div>
             <input type="text" id="joinRoomInput" placeholder="کۆدی ژوور لێرە بنووسە">
             <button id="joinRoomBtn" class="action-btn join-btn">چوونە ناو ژوور</button>
         </div>
 
         <!-- Screen 2: Lobby -->
         <div id="waitingSection" class="game-card" style="display: none;">
-            <a href="index.html" class="back-btn-mini">🏠 گەڕانەوە</a>
-            <h3 style="margin-top: 30px;">کۆدی ژوور</h3>
-            <div id="roomCodeDisplay" style="color: #facc15; font-size: 38px; font-weight: bold; letter-spacing: 5px;"></div>
-            <p id="waitingStatus" style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin: 25px 0; border: 1px dashed #334155; line-height: 1.5;">چاوەڕێی هاوڕێکەت بکە بۆ ئەوەی بەژدار بێت...</p>
+            <a href="index.html" class="back-btn">🏠 گەڕانەوە بۆ سەرەکی</a>
+            <h3 class="text-center">کۆدی ژوور</h3>
+            <div id="roomCodeDisplay" style="color: #facc15; font-size: 38px; font-weight: bold; letter-spacing: 5px; text-align: center;"></div>
+            <p id="waitingStatus" style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin: 25px 0; border: 1px dashed #334155; text-align: center;">چاوەڕێی هاوڕێکەت بکە بۆ ئەوەی بەژدار بێت...</p>
             <button id="startGameBtn" class="action-btn start-btn" style="display: none;">دەستپێکردنی یاری 🚀</button>
         </div>
 
         <!-- Screen 3: Game -->
         <div id="gameSection" class="game-card" style="display: none;">
-            <a href="index.html" class="back-btn-mini">🏠 گەڕانەوە</a>
+            <a href="index.html" class="back-btn">🏠 گەڕانەوە بۆ سەرەکی</a>
             
             <div class="score-container">
                 <div id="p1Card" class="score-box">
                     <div class="player-label">👑 <span id="p1Name">...</span></div>
                     <div id="p1Score" class="score-val">0</div>
-                    <div id="p1Status" style="font-size: 11px; font-weight: bold;">⚡</div>
+                    <div id="p1Status" style="font-size: 11px;">⚡</div>
                 </div>
                 <div id="p2Card" class="score-box">
                     <div class="player-label">⚡ <span id="p2Name">...</span></div>
                     <div id="p2Score" class="score-val">0</div>
-                    <div id="p2Status" style="font-size: 11px; font-weight: bold;">⚡</div>
+                    <div id="p2Status" style="font-size: 11px;">⚡</div>
                 </div>
             </div>
 
@@ -161,7 +110,7 @@
                 <div class="timer-box">⏱️ <span id="timerDisplay">30</span></div>
                 <h3 id="questionText" class="q-text">...</h3>
                 <div id="optionsContainer" class="options-grid"></div>
-                <div id="roundMsg" style="margin-top:20px; font-size:13px; color:#94a3b8; font-weight: bold;">✨ وەڵامێک هەڵبژێرە ✨</div>
+                <div id="roundMsg" style="margin-top:20px; font-size:13px; color:#94a3b8; text-align: center;">✨ وەڵامێک هەڵبژێرە ✨</div>
             </div>
 
             <a href="index.html" class="action-btn exit-btn" style="display: block; text-align: center; text-decoration: none;">📕 دەرچون لە یاری</a>
@@ -169,8 +118,6 @@
     </div>
 
     <script>
-        // --- JavaScript لۆژیک ---
-
         const firebaseConfig = {
             apiKey: "AIzaSyAVUxyWwAuY_ZnwjFC9WZp1NVp1l815a4c",
             authDomain: "yari-online.firebaseapp.com",
@@ -209,7 +156,6 @@
             starsCont.appendChild(star);
         }
 
-        // دروستکردنی ژوور
         document.getElementById('createRoomBtn').onclick = async () => {
             const id = Math.random().toString(36).substring(2, 7).toUpperCase();
             currentRoomId = id; playerNumber = 1;
@@ -218,7 +164,9 @@
                 status: 'waiting', qIndex: 0, a1: -1, a2: -1,
                 timeLeft: 30, roundEnded: false
             });
-            showLobby(id);
+            document.getElementById('roomSection').style.display = 'none';
+            document.getElementById('waitingSection').style.display = 'block';
+            document.getElementById('roomCodeDisplay').innerText = id;
             db.ref('rooms/' + id).on('value', snap => {
                 const r = snap.val();
                 if(!r) return;
@@ -231,7 +179,6 @@
             });
         };
 
-        // بەژداربوون لە ژوور
         document.getElementById('joinRoomBtn').onclick = async () => {
             const id = document.getElementById('joinRoomInput').value.trim().toUpperCase();
             if(!id) return;
@@ -239,7 +186,9 @@
             if(snap.exists() && snap.val().p2 === "") {
                 currentRoomId = id; playerNumber = 2;
                 await db.ref('rooms/' + id).update({ p2: currentUser });
-                showLobby(id);
+                document.getElementById('roomSection').style.display = 'none';
+                document.getElementById('waitingSection').style.display = 'block';
+                document.getElementById('roomCodeDisplay').innerText = id;
                 db.ref('rooms/' + id).on('value', s => {
                     const r = s.val();
                     if(!r) return;
@@ -248,12 +197,6 @@
                 });
             } else { alert("کۆدەکە هەڵەیە یان ژوورەکە پڕە!"); }
         };
-
-        function showLobby(id) {
-            document.getElementById('roomSection').style.display = 'none';
-            document.getElementById('waitingSection').style.display = 'block';
-            document.getElementById('roomCodeDisplay').innerText = id;
-        }
 
         document.getElementById('startGameBtn').onclick = () => {
             db.ref('rooms/' + currentRoomId).update({ status: 'playing' });
@@ -350,13 +293,14 @@
         function showFinal(room) {
             const win = room.p1Score > room.p2Score ? room.p1 : (room.p2Score > room.p1Score ? room.p2 : "یەکسان");
             document.getElementById('gameSection').innerHTML = `
-                <h2 style="color: #facc15; font-size: 30px; margin-bottom: 30px;">کۆتایی یاری</h2>
+                <a href="index.html" class="back-btn">🏠 گەڕانەوە بۆ سەرەکی</a>
+                <h2 style="color: #facc15; font-size: 30px; margin-bottom: 30px; text-align: center;">کۆتایی یاری</h2>
                 <div class="score-container">
                     <div class="score-box active"><h3>${room.p1}</h3><div class="score-val">${room.p1Score}</div></div>
                     <div class="score-box active"><h3>${room.p2}</h3><div class="score-val">${room.p2Score}</div></div>
                 </div>
-                <h3 style="margin:30px 0; font-size: 24px;">🎊 براوە: ${win} 🎊</h3>
-                <a href="index.html" class="action-btn start-btn" style="width: 80%; text-align: center; text-decoration: none;">دووبارە یاری بکەرەوە</a>
+                <h3 style="margin:30px 0; font-size: 24px; text-align: center;">🎊 براوە: ${win} 🎊</h3>
+                <a href="index.html" class="action-btn start-btn" style="display: block; text-align: center; text-decoration: none;">دووبارە یاری بکەرەوە</a>
             `;
         }
     </script>

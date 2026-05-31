@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>یاری دوەم - ماڵی هاوڕیان</title>
-    <link rel="manifest" href="manifest.json">
+    <title>یاری زانیاری ئۆنلاین</title>
     
     <!-- کۆدی ئایکۆن بۆ ئەوەی لەسەر شاشەی مۆبایل وێنەیەکی جوانی هەبێت -->
     <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/240/controller.png">
@@ -23,10 +22,8 @@
             color: white; font-family: 'Segoe UI', Tahoma, sans-serif;
             display: flex; justify-content: center; align-items: center;
             min-height: 100vh; overflow-x: hidden; direction: rtl;
-            <a href="index.html" class="back-home">🏠 ← گەڕانەوە</a>
         }
         
-
         /* باکگراوندی ئەستێرەکان */
         .stars-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -96,7 +93,13 @@
             border-radius: 50px; color: white; text-align: center; box-sizing: border-box; font-size: 18px; margin-top: 10px; outline: none;
         }
 
-        .back-btn-mini { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.05); border: 1px solid #334155; color: #facc15; padding: 5px 12px; border-radius: 50px; font-size: 12px; cursor: pointer; }
+        .back-btn-mini { 
+            position: absolute; top: 15px; right: 15px; 
+            background: rgba(255,255,255,0.05); border: 1px solid #334155; 
+            color: #facc15; padding: 5px 12px; border-radius: 50px; 
+            font-size: 12px; cursor: pointer; text-decoration: none;
+        }
+        .back-btn-mini:hover { background: rgba(250, 204, 21, 0.2); border-color: #facc15; }
 
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(5px); } 75% { transform: translateX(-5px); } }
     </style>
@@ -130,7 +133,7 @@
 
         <!-- Screen 2: Lobby -->
         <div id="waitingSection" class="game-card" style="display: none;">
-            <div class="back-btn-mini" onclick="location.reload()">🏠 گەڕانەوە</div>
+            <a href="index.html" class="back-btn-mini">🏠 گەڕانەوە</a>
             <h3 style="margin-top: 30px;">کۆدی ژوور</h3>
             <div id="roomCodeDisplay" style="color: #facc15; font-size: 38px; font-weight: bold; letter-spacing: 5px;"></div>
             <p id="waitingStatus" style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin: 25px 0; border: 1px dashed #334155; line-height: 1.5;">چاوەڕێی هاوڕێکەت بکە بۆ ئەوەی بەژدار بێت...</p>
@@ -139,7 +142,7 @@
 
         <!-- Screen 3: Game -->
         <div id="gameSection" class="game-card" style="display: none;">
-            <div class="back-btn-mini" onclick="location.reload()">🏠 گەڕانەوە</div>
+            <a href="index.html" class="back-btn-mini">🏠 گەڕانەوە</a>
             
             <div class="score-container">
                 <div id="p1Card" class="score-box">
@@ -161,7 +164,7 @@
                 <div id="roundMsg" style="margin-top:20px; font-size:13px; color:#94a3b8; font-weight: bold;">✨ وەڵامێک هەڵبژێرە ✨</div>
             </div>
 
-            <button class="action-btn exit-btn" onclick="location.reload()">📕 دەرچوون لە یاری</button>
+            <a href="index.html" class="action-btn exit-btn" style="display: block; text-align: center; text-decoration: none;">📕 دەرچون لە یاری</a>
         </div>
     </div>
 
@@ -299,7 +302,6 @@
 
             const q = questions[room.qIndex];
             
-            // چارەسەری گرنگ بۆ وەڵامە پاشماوەکان
             if (lastRenderedQIndex !== room.qIndex || room.roundEnded) {
                 document.getElementById('questionText').innerText = q.text;
                 const container = document.getElementById('optionsContainer');
@@ -354,7 +356,7 @@
                     <div class="score-box active"><h3>${room.p2}</h3><div class="score-val">${room.p2Score}</div></div>
                 </div>
                 <h3 style="margin:30px 0; font-size: 24px;">🎊 براوە: ${win} 🎊</h3>
-                <button onclick="location.reload()" class="action-btn start-btn" style="width: 80%;">دووبارە یاری بکەرەوە</button>
+                <a href="index.html" class="action-btn start-btn" style="width: 80%; text-align: center; text-decoration: none;">دووبارە یاری بکەرەوە</a>
             `;
         }
     </script>

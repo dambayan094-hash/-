@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>یاری دووەم - باڵی هاوڕێیان</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        :root { --led-blue: #00d2ff; --led-gold: #facc15; --led-purple: #9d50bb; }
+        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+        body { margin: 0; padding: 15px; background: #050a18; color: white; font-family: 'Segoe UI', sans-serif; min-height: 100vh; overflow: hidden; direction: rtl; display: flex; justify-content: center; align-items: center; }
+        .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .star { position: absolute; background: white; border-radius: 50%; animation: twinkle var(--duration) infinite; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+        .game-card { background-color: rgba(11, 17, 32, 0.96); border: 2px solid var(--led-blue); border-radius: 30px; padding: 25px; box-shadow: 0 0 30px var(--led-blue); position: relative; z-index: 10; width: 100%; max-width: 550px; min-height: 250px; }
+        .back-home-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--led-blue); color: white; padding: 8px 20px; border-radius: 50px; cursor: pointer; text-decoration: none; font-size: 13px; display: inline-block; margin-bottom: 20px; }
+        .score-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        @media (min-width: 480px) { .score-container { grid-template-columns: repeat(4, 1fr); } }
+        .score-box { border: 2px solid #334155; border-radius: 18px; padding: 10px; text-align: center; background: rgba(255,255,255,0.02); transition: 0.3s; }
+        .score-box.active { border-color: var(--led-gold); box-shadow: 0 0 15px var(--led-gold); }
+        .player-avatar { width: 45px; height: 45px; border-radius: 50%; margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.1); background: #1e293b; }
+        .question-area { border: 2px solid var(--led-gold); border-radius: 25px; padding: 20px; margin-bottom: 20px; position: relative; background: rgba(0,0,0,0.3); }
+        .timer-box { text-align:center; font-size:26px; font-weight:bold; color:var(--led-gold); margin-bottom:10px; }
+        .option-btn { width: 100%; background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 15px; border-radius: 50px; cursor: pointer; margin: 6px 0; font-family: inherit; font-size: 15px; transition: 0.2s; }
+        .option-btn.selected { background: var(--led-blue); color: white; border-color: white; box-shadow: 0 0 10px var(--led-blue); }
+        .option-btn.correct { background: #166534 !important; border-color: #4ade80 !important; color: white; }
+        .option-btn.wrong { background: #991b1b !important; border-color: #f87171 !important; color: white; }
+        .action-btn { width: 100%; padding: 16px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; background: var(--led-blue); color: #000; font-size: 16px; margin-top: 10px; }
+        #countdownOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11,17,32,0.98); border-radius: 25px; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 100; text-align: center; padding: 20px; }
+        #cdText { color: var(--led-gold); font-weight: bold; margin-bottom: 10px; font-size: 18px; }
+        #cdNum { font-size: 28px; font-weight: bold; color: white; }
+        #statusLoader { text-align: center; color: var(--led-blue); padding: 40px; font-weight: bold; }
+    </style>
+</head>
+<body onclick="initAudio()">
+    <div class="stars-container" id="starsCont"></div>
+    <div class="game-card">
+        <div id="statusLoader" style="display:none;">تکایە بوەستە... پەیوەست دەبێت</div>
+        <div id="roomSection">
+            <a href="index.html" class="back-home-btn">🏠 هۆم</a>
+            <h2 style="text-align:center; color: var(--led-blue); margin-bottom: 20px;">🎮 کێبڕکێی زیرەکی</h2>
+            <button class="action-btn" onclick="createR()">دروستکردنی ژوور</button>
+            <div style="margin: 20px 0; text-align: center; color: #475569; font-weight: bold;">— یان —</div>
+            <input type="text" id="joinIn" placeholder="کۆدی ژوور" style="width:100%; padding:16px; border-radius:50px; text-align:center; background:#050a18; color:white; border:1px solid #334155; margin-bottom: 15px; outline: none;">
+            <button class="action-btn" style="background:#10b981; color: white;" onclick="joinR()">چوونە ناو ژوور</button>
+        </div>
+        <div id="waitingSection" style="display:none; text-align: center;">
+            <a href="index.html" class="back-home-btn">🏠 هۆم</a>
+            <h3 style="color:var(--led-gold);">کۆدی ژوور:</h3>
+            <div id="codeDisp" style="color:white; font-size:40px; font-weight:bold; letter-spacing:8px; margin-bottom: 20px;"></div>
+            <div id="playerList" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:20px 0;"></div>
+            <button id="startBtn" class="action-btn" style="display:none; background:#8b5cf6; color:white;" onclick="startG()">START 🚀</button>
+        </div>
+        <div id="gameSection" style="display:none;">
+            <div class="score-container" id="scoreBoard"></div>
+            <div class="question-area">
+                <div id="countdownOverlay"><div id="cdText"></div><div id="cdNum"></div></div>
+                <div class="timer-box">⏱️ <span id="timerDisp">30</span></div>
+                <h3 id="qText" style="text-align:center; min-height:50px; font-size:18px;"></h3>
+                <div id="optionsCont" style="margin-top:10px;"></div>
+            </div>
+            <button class="action-btn" style="background:#e11d48; color:white;" onclick="location.href='index.html'">📕 دەرچوون</button>
+        </div>
+    </div>
+
+<script>
+    const tickS = new Audio('https://actions.google.com/sounds/v1/ui/click_on.ogg');
+    const winS = new Audio('https://actions.google.com/sounds/v1/cartoon/clown_horn_accent.ogg');
+    let aInit = false;
+    function initAudio() { if(!aInit) { tickS.play(); tickS.pause(); winS.play(); winS.pause(); aInit = true; } }
+    function playS(s) { if(localStorage.getItem('music')!=='off') { s.currentTime=0; s.play().catch(()=>{}); } }
+
+    const firebaseConfig = { apiKey: "AIzaSyAVUxyWwAuY_ZnwjFC9WZp1NVp1l815a4c", authDomain: "yari-online.firebaseapp.com", databaseURL: "https://yari-online-default-rtdb.firebaseio.com", projectId: "yari-online", storageBucket: "yari-online.firebasestorage.app", messagingSenderId: "503368361126", appId: "1:503368361126:web:09028d371b17372e320067" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ١٠٠ پرسیاری جۆراوجۆر
+    const questions = [
+        {text:"پایتەختی فەڕەنسا کام شارەیە؟",options:["لەندەن","پاریس","ڕۆما","بەرلین"],correct:1},
+        {text:"گەورەترین وڵاتی جیهان کامەیە؟",options:["چین","ئەمریکا","ڕووسیا","کەنەدا"],correct:2},
+        {text:"کام هەسارە بە 'هەسارەی سوور' ناسراوە؟",options:["مەریخ","کەیوان","زوحەل","زەوی"],correct:0},
+        {text:"کێ داهێنەری گڵۆپ بوو؟",options:["نیوتن","تۆماس ئەدیسۆن","ئینشتاین","تێسلا"],correct:1},
+        {text:"چەند کیشوەر لە جیهاندا هەیە؟",options:["٥","٦","٧","٨"],correct:2},
+        {text:"بەرزترین لوتکە چیای جیهان کامەیە؟",options:["هێڵگورد","چیای ئاگری","ئێڤرێست","کەی ٢"],correct:2},
+        {text:"ئاڵای کوردستان لە چەند ڕەنگ پێکهاتووە؟",options:["٢","٣","٤","٥"],correct:2},
+        {text:"کام گیاندار بە 'پاشای دارستان' ناسراوە؟",options:["فیل","نمر","شێر","ورچ"],correct:2},
+        {text:"سوورەچنار پایتەختی کام پارێزگایەیە؟",options:["سلێمانی","هەولێر","کەرکووک","دهۆک"],correct:0},
+        {text:"درێژترین ڕووباری جیهان کامەیە؟",options:["نیل","ئەمازۆن","دیجلە","فوڕات"],correct:0},
+        {text:"کام وڵات بە 'وڵاتی خۆرەەڵاتن' ناسراوە؟",options:["چین","کۆریای باکوور","ژاپۆن","تایلەند"],correct:2},
+        {text:"چەند چرکە لە یەک کاتژمێردا هەیە؟",options:["٦٠","٣٦٠","٣٦٠٠","٦٠٠"],correct:2},
+        {text:"کێ کتێبی 'شەرەفنامە'ی نووسیوە؟",options:["ئەحمەدی خانی","شەرەفخانی بدلیسی","مەلای جزیری","نالی"],correct:1},
+        {text:"پایتەختی وڵاتی میسر کامەیە؟",options:["قاهیرە","ئەسکەندەریە","لۆکسۆر","بەنها"],correct:0},
+        {text:"کامە کانزا بە شلی لە پلەی گەرمی ژووردا دەمێنێتەوە؟",options:["ئاسن","زێڕ","جیقە (Mercury)","زیو"],correct:2},
+        {text:"گەورەترین کیشوەری جیهان کامەیە؟",options:["ئەورووپا","ئەفریقا","ئاسیا","ئەمریکا"],correct:2},
+        {text:"کام ڕەنگ لە تێکەڵکردنی شین و زەرد دروست دەبێت؟",options:["سوور","سەوز","مۆر","پرتەقاڵی"],correct:1},
+        {text:"کۆنترین شارستانیەت لە مێژوودا کامەیە؟",options:["فەراعینە","یۆنانی","سۆمەری","ڕۆمانی"],correct:2},
+        {text:"چەند یاریزان لە تیمی تۆپی پێدا هەیە لەناو یاریگا؟",options:["٩","١٠","١١","١٢"],correct:2},
+        {text:"کۆنترین زانکۆی جیهان لە کام وڵاتە؟",options:["میسر","ئیتاڵیا","مەغریب","فەڕەنسا"],correct:2},
+        {text:"دڵی مرۆڤ چەند ژووری تێدایە؟",options:["٢","٣","٤","٥"],correct:2},
+        {text:"کێ وێنەی 'مۆنالیزا'ی کێشا؟",options:["پیکاسۆ","داڤینشی","ڤان گۆخ","مایکل ئەنجیلۆ"],correct:1},
+        {text:"پایتەختی عێراق کام شارەیە؟",options:["بەغدا","بەسرە","مووسڵ","نەجەف"],correct:0},
+        {text:"کام وڵات زۆرترین دانیشتوانی هەیە؟",options:["ڕووسیا","ئەمریکا","هیندستان","بەڕازیڵ"],correct:2},
+        {text:"گەورەترین ئۆقیانووس کامەیە؟",options:["ئەتڵەسی","هیند","هێمن (Pacific)","بەستووی باکوور"],correct:2},
+        {text:"ئاوی پاک لە چ پلەیەکی گەرمیدا دەبێتە سەهۆڵ؟",options:["٠","١٠","١٠٠","-١٠"],correct:0},
+        {text:"کام وڵات بە 'وڵاتی ملیۆنێک شەهید' ناسراوە؟",options:["عێراق","فەلەستین","جەزائیر","مەغریب"],correct:2},
+        {text:"کێ داهێنەری تەلەفۆن بوو؟",options:["ئەلێکساندەر گراهام بێڵ","ئەدیسۆن","مارکۆنی","نیوتن"],correct:0},
+        {text:"کامە گازی هەوا بۆ هەناسەدان پێویستە؟",options:["نایترۆجین","ئۆکسجین","دیۆکسیدی کاربۆن","هێلیۆم"],correct:1},
+        {text:"پایتەختی ئیتالیا کامەیە؟",options:["پاریس","مەدرید","ڕۆما","لەندەن"],correct:2},
+        {text:"گەورەترین بیابانی جیهان کامەیە؟",options:["گووبی","بیابانی گەورە (Sahara)","نەفود","کەلهاری"],correct:1},
+        {text:"چەند مانگ لە ساڵێکدا ٣١ ڕۆژن؟",options:["٥","٦","٧","٨"],correct:2},
+        {text:"کام ئەندامی مرۆڤ بەرپرسە لە پاککردنەوەی خوێن؟",options:["دڵ","سییەکان","گورچیلە","مێشک"],correct:2},
+        {text:"پایتەختی وڵاتی تورکیا کامەیە؟",options:["ئیستانبووڵ","ئەنکەرە","ئەزمیر","ئەدەنا"],correct:1},
+        {text:"کام یاریزان زۆرترین باڵۆن دۆری بردۆتەوە؟",options:["ڕۆناڵدۆ","میسی","نیمار","زیدان"],correct:1},
+        {text:"درێژترین دیوار لە جیهاندا کامەیە؟",options:["دیواری بەرلین","دیواری چین","دیواری قودس","دیواری لەندەن"],correct:1},
+        {text:"کام وڵات گەورەترین بەرهەمهێنەری قاوەیە؟",options:["کۆڵۆمبیا","ڤێتنام","بەڕازیڵ","ئیتیۆپیا"],correct:2},
+        {text:"چەند هەسارە لە کۆمەڵەی خۆردا هەیە؟",options:["٧","٨","٩","١٠"],correct:1},
+        {text:"کێ داهێنەری تۆڕی ئینتەرنێت (WWW) بوو؟",options:["بێڵ گەیتس","تیم بێرنەرز لی","ستیڤ جۆبس","ئیلۆن مەسک"],correct:1},
+        {text:"کام شار بە 'شاری حەوت گرد' ناسراوە؟",options:["ئەستەنبووڵ","ڕۆما","پاریس","بەغدا"],correct:1},
+        {text:"ئاوی پاک لە چ پلەیەکی گەرمیدا دەکوڵێت؟",options:["٥٠","٨٠","١٠٠","١٢٠"],correct:2},
+        {text:"کام وڵات خاوەنی زۆرترین دوورگەیە؟",options:["فینلەندا","نەرویج","سوید","ئەندۆنیزیا"],correct:2},
+        {text:"گەورەترین مەمکداری سەر زەوی کامەیە؟",options:["فیل","نەهەنگی شین","زەڕافە","شێر"],correct:1},
+        {text:"پایتەختی ئەڵمانیا کامەیە؟",options:["میونشن","هامبۆرگ","بەرلین","فرانکفۆرت"],correct:2},
+        {text:"کام ئایین کۆنترین ئایینی ئاسمانییە؟",options:["ئیسلام","مەسیحی","جوولەکە","زەردەشتی"],correct:2},
+        {text:"چەند ڕۆژ لە ساڵێکی پڕدا (Leap Year) هەیە؟",options:["٣٦٤","٣٦٥","٣٦٦","٣٦٧"],correct:2},
+        {text:"کێ یەکەم مرۆڤ بوو چووە سەر مانگ؟",options:["یوری گاگارین","نیڵ ئارمسترۆنگ","باز ئۆڵدرین","کۆڵینز"],correct:1},
+        {text:"پایتەختی ئێران کامەیە؟",options:["تەورێز","مەشھەد","تاران","شیراز"],correct:2},
+        {text:"کام شار بە 'بووکی باکوور' ناسراوە لە کوردستان؟",options:["سۆران","ئاکرێ","زاخۆ","شەقڵاوە"],correct:1},
+        {text:"کورتترین مانگی ساڵ کامەیە؟",options:["کانونی دووەم","شوبات","ئازار","نیسان"],correct:1},
+        {text:"کام ئاسنەواڵە زۆرترین ڕەقی هەیە؟",options:["ئاسن","ئەڵماس","زێڕ","مس"],correct:1},
+        {text:"پایتەختی بەڕازیڵ کامەیە؟",options:["ڕیۆ دی جانیرۆ","ساوپاوڵۆ","بەڕازیڵیا","فۆرتالێزا"],correct:2},
+        {text:"جەنگی جیهانی یەکەم لە چ ساڵێکدا دەستی پێکرد؟",options:["١٩١٠","١٩١٤","١٩١٨","١٩٣٩"],correct:1},
+        {text:"جەنگی جیهانی دووەم لە چ ساڵێکدا کۆتایی هات؟",options:["١٩٤٠","١٩٤٤","١٩٤٥","١٩٥٠"],correct:2},
+        {text:"چەند ددان لە دەمی مرۆڤێکی پێگەیشتوودا هەیە؟",options:["٢٨","٣٠","٣٢","٣٤"],correct:2},
+        {text:"کام وڵات پایتەختەکەی 'تۆکیۆ'یە؟",options:["چین","ژاپۆن","کۆریای باشوور","ڤێتنام"],correct:1},
+        {text:"ئاژەڵی نیشتمانی ئوسترالیا کامەیە؟",options:["کەنگەر","کۆالا","شێر","پڵنگ"],correct:0},
+        {text:"بە چەند خولەک خۆر دەگاتە سەر زەوی؟",options:["٥ خولەک","٨ خولەک","١٢ خولەک","١٥ خولەک"],correct:1},
+        {text:"کام وڵات بە 'وڵاتی فیرعەونەکان' ناسراوە؟",options:["یۆنان","میسر","عێراق","ئیتالیا"],correct:1},
+        {text:"چەند ڕەنگ لە پەلکە زێڕینەدا هەیە؟",options:["٥","٦","٧","٨"],correct:2},
+        {text:"پایتەختی ڕووسیا کامەیە؟",options:["سانت پیتەرزبوورگ","مۆسکۆ","کاڤاز","سۆچی"],correct:1},
+        {text:"کام گاز دەبێتە هۆی گۆڕانی دەنگ بۆ بارێکی منداڵانە؟",options:["ئۆکسجین","هێلیۆم","نایترۆجین","هایدرۆجین"],correct:1},
+        {text:"درێژترین سورەتی قورئان کامەیە؟",options:["ال عمران","النساء","البقرة","المائدة"],correct:2},
+        {text:"کورتترین سورەتی قورئان کامەیە؟",options:["الاخلاص","الناس","الکوثر","الفلق"],correct:2},
+        {text:"کامە کانزا گرانبەهاترە؟",options:["زیو","مس","ئەڵماس","ئاسن"],correct:2},
+        {text:"پایتەختی سعوودیە کامەیە؟",options:["جەدە","مەککە","ڕیاز","مەدینە"],correct:2},
+        {text:"چەند چاو لە مێشوولەدا هەیە؟",options:["٢","١٠","١٠٠","١٠٠٠"],correct:2},
+        {text:"کێ خاوەنی کۆمپانیای مایکرۆسۆفتە؟",options:["ئیلۆن مەسک","بێڵ گەیتس","مارک زوکەربێرگ","ستیڤ جۆبس"],correct:1},
+        {text:"کام کیشوەر بە 'کیشوەری سپی' ناسراوە؟",options:["ئاسیا","ئەورووپا","جەمسەری باشوور","ئەفریقا"],correct:2},
+        {text:"چەند پیت لە ئەلفوبێی کوردیدا هەیە؟",options:["٢٨","٣٢","٣٤","٣٧"],correct:2},
+        {text:"پایتەختی ئیسپانیا کامەیە؟",options:["بارسێلۆنا","مەدرید","ڤالێنسیا","سیڤییا"],correct:1},
+        {text:"کام شار بە 'شاری عەشق' ناسراوە؟",options:["ڕۆما","ڤینیسیا","پاریس","لەندەن"],correct:2},
+        {text:"کێ یەکەم کەس بوو گەشتی بە دەوری جیهاندا کرد؟",options:["کۆڵۆمبۆس","ماجەلان","ڤاسکۆ دا گاما","کاپتن کوک"],correct:1},
+        {text:"چەند نیوە گۆی زەوی هەیە؟",options:["٢","٣","٤","٦"],correct:0},
+        {text:"کام گیانلەبەر بە پێیەکانی تام دەکات؟",options:["مێش","پەپوولە","مێشوولە","هەنگ"],correct:1},
+        {text:"پایتەختی بەریتانیا کامەیە؟",options:["لەندەن","پاریس","بەرلین","ڕۆما"],correct:0},
+        {text:"کام میوە بە 'پاشای میوەکان' ناسراوە؟",options:["سێو","مانگۆ","هەنار","پرتەقاڵی"],correct:1},
+        {text:"چەند ساڵ تەمەنی سەدەیەکە؟",options:["١٠","٥٠","١٠٠","١٠٠٠"],correct:2},
+        {text:"کێ داهێنەری ئۆتۆمبێل بوو؟",options:["هێنری فۆرد","کارڵ بێنز","تێسلا","دایملەر"],correct:1},
+        {text:"پایتەختی یۆنان کامەیە؟",options:["ڕۆما","ئەتینا","مەدرید","پاریس"],correct:1},
+        {text:"کامە گەورەترین دەریاچەی جیهانە؟",options:["دەریاچەی ڤیکتۆریا","دەریای کاسپیەن","دەریاچەی سوپەریۆر","دەریای مردوو"],correct:1},
+        {text:"چەند پارێزگا لە هەرێمی کوردستان هەیە؟",options:["٣","٤","٥","٦"],correct:1},
+        {text:"کام وڵات زۆرترین گەنمی هەیە؟",options:["ڕووسیا","ئەمریکا","چین","کەنەدا"],correct:2},
+        {text:"پایتەختی سووریا کامەیە؟",options:["حەما","حەلەب","دیمەشق","حومس"],correct:2},
+        {text:"کامە تاقە ئاژەڵە کە ناخەوێت؟",options:["مێروولە","کۆسە","دۆلفین","زەڕافە"],correct:0},
+        {text:"چەند ڕۆژ لە مانگی شوباتدا هەیە لە ساڵێکی ئاساییدا؟",options:["٢٧","٢٨","٢٩","٣٠"],correct:1},
+        {text:"کێ نووسەری ڕۆمانی 'مەم و زین'ە؟",options:["نالی","هێمن","ئەحمەدی خانی","قانع"],correct:2},
+        {text:"پایتەختی سویسرا کامەیە؟",options:["جنێف","زوریخ","بێرن","لۆزان"],correct:2},
+        {text:"کام شار بە 'پایتەختی ڕۆشنبیری' کوردستان ناسراوە؟",options:["هەولێر","دهۆک","سلێمانی","کەرکووک"],correct:2},
+        {text:"گەورەترین تەلەسکۆپی جیهان کامەیە؟",options:["هابڵ","جەیمس وێب","ناسا","کێپلەر"],correct:1},
+        {text:"کام وڵات بە 'وڵاتی کانگۆ' ناسراوە؟",options:["ئەفریقای باشوور","کەینیا","جەزائیر","کۆماری دیموکراسی کانگۆ"],correct:3},
+        {text:"چەند سەکۆ هەیە لە یاری شەترەنجدا؟",options:["٣٢","٤٨","٦٤","٨٠"],correct:2},
+        {text:"کام وڵات پایتەختەکەی 'ئۆسلۆ'یە؟",options:["سوید","دانیمارک","نەرویج","فینلەندا"],correct:2},
+        {text:"کۆنترین شارستانیەتی عێراق کامەیە؟",options:["بابلی","ئاشووری","سۆمەری","ئەکەدی"],correct:2},
+        {text:"پایتەختی مەغریب کامەیە؟",options:["کازابلانکا","ڕەبات","مەراکش","تەنجە"],correct:1},
+        {text:"کام وڵات بە 'وڵاتی هەزار دەریاچە' ناسراوە؟",options:["کەنەدا","سوید","فینلەندا","ڕووسیا"],correct:2},
+        {text:"چەند ساڵ جارێک یارییەکانی ئۆڵۆمپیاد ئەنجام دەدرێت؟",options:["٢","٣","٤","٥"],correct:2},
+        {text:"کام گیاندار تاقە ئاژەڵە ناتوانێت باز بدات؟",options:["زەڕافە","فیل","کەرکەدەن","ورچی جەمسەری"],correct:1},
+        {text:"پایتەختی ئیمارات کامەیە؟",options:["دوبەی","شارجه","ئەبوزەبی","عەجمان"],correct:2},
+        {text:"کام وڵات بە 'وڵاتی تاتار' ناسراوە؟",options:["ڕووسیا","مەنگۆلیا","تورکیا","ئۆزبەکستان"],correct:1}
+    ];
+
+    let curU = localStorage.getItem('currentUser'), curAv = localStorage.getItem('userAvatar') || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky", curRoom = null, pNum = null, isL = false, lastQ = -1, lastRE = false;
+
+    window.addEventListener('load', async () => {
+        const params = new URLSearchParams(window.location.search);
+        const joinId = params.get('join');
+        const teamID = params.get('teamID');
+        if (joinId) {
+            document.getElementById('roomSection').style.display = 'none';
+            document.getElementById('statusLoader').style.display = 'block';
+            if(teamID) db.ref('teams/'+teamID).remove();
+            await handleAutoJoin(joinId);
+        }
+    });
+
+    async function handleAutoJoin(id) {
+        const s = await db.ref('rooms/'+id).get();
+        if (!s.exists()) {
+            await db.ref('rooms/'+id).set({ p1:curU, p1Score:0, a1:-1, p1Av:curAv, p2:"", p2Score:0, a2:-1, p2Av:"", p3:"", p4:"", status:'waiting', qIndex:0, timeLeft:30, roundEnded:false });
+            pNum = 1;
+        } else {
+            let r = s.val();
+            if(r.p1 === curU) pNum = 1;
+            else if(r.p2 === curU) pNum = 2;
+            else if(r.p3 === curU) pNum = 3;
+            else if(r.p4 === curU) pNum = 4;
+            else {
+                let slot = r.p2===""?"p2":(r.p3===""?"p3":(r.p4===""?"p4":""));
+                if(slot) { pNum = parseInt(slot[1]); await db.ref('rooms/'+id+'/'+slot).set(curU); await db.ref('rooms/'+id+'/'+slot+'Av').set(curAv); }
+                else { alert("پڕە"); return location.href='index.html'; }
+            }
+        }
+        curRoom = id;
+        document.getElementById('statusLoader').style.display = 'none';
+        listenR(id);
+    }
+
+    async function createR() { const id = Math.random().toString(36).substring(2, 7).toUpperCase(); curRoom = id; pNum = 1; await db.ref('rooms/'+id).set({ p1:curU, p1Score:0, a1:-1, p1Av:curAv, p2:"", p2Score:0, a2:-1, p2Av:"", p3:"", p3Score:0, a3:-1, p3Av:"", p4:"", p4Score:0, a4:-1, p4Av:"", status:'waiting', qIndex:0, timeLeft:30, roundEnded:false }); listenR(id); }
+    async function joinR() { const id = document.getElementById('joinIn').value.toUpperCase(); if(id) handleAutoJoin(id); }
+
+    function listenR(id) {
+        document.getElementById('roomSection').style.display = 'none';
+        document.getElementById('waitingSection').style.display = 'block';
+        document.getElementById('codeDisp').innerText = id;
+        db.ref('rooms/'+id).on('value', snap => {
+            const r = snap.val(); if(!r) return;
+            const pL = document.getElementById('playerList'); pL.innerHTML = "";
+            [1,2,3,4].forEach(i => { if(r["p"+i]) pL.innerHTML += `<div class="score-box active"><img src="${r['p'+i+'Av'] || curAv}" class="player-avatar"><br><span style="font-size:10px;">${r["p"+i]}</span></div>`; });
+            if(pNum===1 && r.p2) document.getElementById('startBtn').style.display = 'block';
+            if(r.status==='playing') startA();
+            if(r.status==='ended') showF(r);
+        });
+    }
+
+    function startG() { db.ref('rooms/'+curRoom).update({status:'playing'}); }
+
+    function startA() {
+        document.getElementById('waitingSection').style.display = 'none';
+        document.getElementById('gameSection').style.display = 'block';
+        db.ref('rooms/'+curRoom).on('value', snap => {
+            const r = snap.val(); if(!r || r.status!=='playing') return;
+            if(r.roundEnded && !lastRE) { playS(winS); showO(r); }
+            lastRE = r.roundEnded;
+            updateUI(r);
+            if(pNum===1 && !r.roundEnded && !isL) {
+                let all = (r.a1!==-1) && (r.p2==="" || r.a2!==-1) && (r.p3==="" || r.a3!==-1) && (r.p4==="" || r.a4!==-1);
+                if(all && r.timeLeft>5) db.ref('rooms/'+curRoom).update({timeLeft:5});
+                if(r.timeLeft<=0) { isL=true; handleRE(r); }
+            }
+        });
+        if(pNum===1) { if(window.timerSet) clearInterval(window.timerSet); window.timerSet = setInterval(async () => { const s = await db.ref('rooms/'+curRoom).get(); const r = s.val(); if(r && r.status==='playing' && !r.roundEnded && r.timeLeft > 0) db.ref('rooms/'+curRoom).update({timeLeft:r.timeLeft-1}); }, 1000); }
+    }
+
+    function updateUI(r) {
+        const tD = document.getElementById('timerDisp');
+        if(tD.innerText != r.timeLeft && r.timeLeft>0 && !r.roundEnded) playS(tickS);
+        tD.innerText = r.timeLeft;
+        const sB = document.getElementById('scoreBoard'); sB.innerHTML = "";
+        [1,2,3,4].forEach(i => { if(r["p"+i]) sB.innerHTML += `<div class="score-box ${(r['a'+i]!==-1 && !r.roundEnded)?'active':''}"><img src="${r['p'+i+'Av'] || curAv}" class="player-avatar"><div>${r["p"+i]}</div><div style="font-size:20px; font-weight:bold;">${r["p"+i+"Score"]}</div></div>`; });
+        const q = questions[r.qIndex];
+        if(lastQ !== r.qIndex || r.roundEnded) {
+            document.getElementById('qText').innerText = q.text;
+            const c = document.getElementById('optionsCont'); c.innerHTML = "";
+            q.options.forEach((opt, i) => {
+                const b = document.createElement('button'); b.className = 'option-btn'; b.innerText = `${['A','B','C','D'][i]} - ${opt}`;
+                if(r["a"+pNum]===i) b.classList.add('selected');
+                b.disabled = r["a"+pNum]!==-1 || r.roundEnded;
+                if(r.roundEnded) { if(i===q.correct) b.classList.add('correct'); else if(i===r["a"+pNum]) b.classList.add('wrong'); }
+                b.onclick = () => { playS(tickS); b.classList.add('selected'); db.ref('rooms/'+curRoom+'/a'+pNum).set(i); };
+                c.appendChild(b);
+            });
+            if(!r.roundEnded) { lastQ = r.qIndex; document.getElementById('countdownOverlay').style.display='none'; }
+        }
+    }
+
+    function showO(r) {
+        const o = document.getElementById('countdownOverlay'); const ct = document.getElementById('cdText'); const cn = document.getElementById('cdNum');
+        o.style.display = 'flex'; ct.innerText = "وەڵامی ڕاست:"; cn.innerText = questions[r.qIndex].options[questions[r.qIndex].correct];
+        setTimeout(() => {
+            ct.innerText = "ئامادەبە!"; let count = 5; cn.innerText = count;
+            let int = setInterval(() => { count--; if(count>0) { cn.innerText=count; playS(tickS); } else clearInterval(int); }, 1000);
+        }, 2500);
+    }
+
+    async function handleRE(r) {
+        let ups = { roundEnded: true };
+        [1,2,3,4].forEach(i => { if(r["p"+i] && r["a"+i]===questions[r.qIndex].correct) ups[`p${i}Score`] = r[`p${i}Score`]+1; });
+        await db.ref('rooms/'+curRoom).update(ups);
+        setTimeout(async () => {
+            const snap = await db.ref('rooms/'+curRoom).get(); const rs = snap.val();
+            if(rs.qIndex+1 < questions.length) { await db.ref('rooms/'+curRoom).update({ qIndex:rs.qIndex+1, a1:-1, a2:-1, a3:-1, a4:-1, timeLeft:30, roundEnded:false }); isL=false; }
+            else db.ref('rooms/'+curRoom).update({status:'ended'});
+        }, 8500);
+    }
+
+    function showF(r) {
+        let ps = []; [1,2,3,4].forEach(i => { if(r["p"+i]) ps.push({n:r["p"+i], s:r["p"+i+"Score"], av:r["p"+i+"Av"]}); });
+        ps.sort((a,b)=>b.s-a.s);
+        const o = document.getElementById('countdownOverlay'); o.style.display='flex';
+        document.getElementById('cdText').innerText = "کۆتایی یاری! ئەنجامەکان...";
+        let c = 3; document.getElementById('cdNum').innerText = c;
+        let int = setInterval(() => {
+            c--; if(c>0) document.getElementById('cdNum').innerText=c;
+            else {
+                clearInterval(int);
+                document.getElementById('gameSection').innerHTML = `<h2 style="text-align:center;color:var(--led-gold);margin-top:20px;">براوە: ${ps[0].n}</h2><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0;">${ps.map(p=>`<div class="score-box active"><img src="${p.av || curAv}" class="player-avatar"><div>${p.n}</div><div>${p.s}</div></div>`).join('')}</div><button class="action-btn" onclick="location.href='index.html'">گەڕانەوە بۆ هۆم</button>`;
+            }
+        }, 1000);
+    }
+
+    const sC = document.getElementById('starsCont');
+    for(let i=0;i<60;i++){ const s=document.createElement('div'); s.className='star'; let sz=Math.random()*2+1; s.style.width=sz+'px'; s.style.height=sz+'px'; s.style.left=Math.random()*100+'%'; s.style.top=Math.random()*100+'%'; s.style.setProperty('--duration', (Math.random()*3+2)+'s'); sC.appendChild(s); }
+</script>
+</body>
+</html>

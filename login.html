@@ -5,126 +5,90 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>PITO - چوونەژوورەوە</title>
     <style>
-        :root {
-            --pito-red: #e61e25;
-        }
-
-        * { 
-            margin: 0; padding: 0; box-sizing: border-box; 
-            font-family: 'Segoe UI', Tahoma, sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
-        }
-
-        body { 
-            background-color: var(--pito-red); 
-            display: flex; justify-content: center; align-items: center; 
-            min-height: 100vh; direction: rtl; 
-        }
+        :root { --pito-red: #e61e25; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--pito-red); display: flex; justify-content: center; align-items: center; min-height: 100vh; direction: rtl; }
 
         .login-card { 
-            background: white; 
-            width: 90%; 
-            max-width: 380px; 
-            padding: 45px 30px; 
-            border-radius: 35px; 
-            text-align: center; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.2); 
+            background: white; width: 90%; max-width: 380px; padding: 40px 30px; 
+            border-radius: 35px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.2); 
             animation: slideUp 0.6s ease;
         }
 
-        @keyframes slideUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .logo { font-size: 55px; font-weight: 900; color: var(--pito-red); margin-bottom: 5px; letter-spacing: 3px; }
+        .sub-title { color: #666; font-size: 14px; margin-bottom: 30px; }
 
-        .logo { 
-            font-size: 55px; 
-            font-weight: 900; 
-            color: var(--pito-red); 
-            margin-bottom: 10px; 
-            letter-spacing: 3px; 
-        }
-
-        .sub-title {
-            color: #666;
-            font-size: 15px;
-            margin-bottom: 30px;
-        }
-
+        .input-group { text-align: right; margin-bottom: 15px; }
+        label { font-size: 13px; color: #888; margin-right: 10px; font-weight: bold; }
+        
         input { 
-            width: 100%; 
-            padding: 18px; 
-            margin-bottom: 20px; 
-            border: 2px solid #f2f2f7; 
-            border-radius: 20px; 
-            outline: none; 
-            font-size: 16px; 
-            text-align: center; 
-            background: #f2f2f7;
-            transition: 0.3s;
+            width: 100%; padding: 15px; margin-top: 5px; border: 2px solid #f2f2f7; 
+            border-radius: 18px; outline: none; font-size: 16px; text-align: center; 
+            background: #f2f2f7; transition: 0.3s;
         }
-
-        input:focus {
-            border-color: var(--pito-red);
-            background: #fff;
-        }
+        input:focus { border-color: var(--pito-red); background: #fff; }
 
         button { 
-            width: 100%; 
-            padding: 18px; 
-            background: var(--pito-red); 
-            color: white; 
-            border: none; 
-            border-radius: 20px; 
-            font-weight: bold; 
-            font-size: 18px; 
-            cursor: pointer; 
-            transition: 0.2s;
-            box-shadow: 0 10px 20px rgba(230,30,37,0.3);
+            width: 100%; padding: 16px; background: var(--pito-red); color: white; 
+            border: none; border-radius: 18px; font-weight: bold; font-size: 18px; 
+            cursor: pointer; transition: 0.2s; margin-top: 10px;
+            box-shadow: 0 10px 20px rgba(230,30,37,0.2);
         }
-
-        button:active {
-            transform: scale(0.96);
-        }
-
-        .footer-text {
-            margin-top: 25px;
-            font-size: 12px;
-            color: #aaa;
-        }
+        button:active { transform: scale(0.96); }
+        .error-msg { color: #e11d48; font-size: 12px; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
 
     <div class="login-card">
         <div class="logo">PITO</div>
-        <p class="sub-title">بەخێربێیت بۆ باڵی هاوڕێیان</p>
+        <p class="sub-title">چوونەژوورەوە بۆ باڵی هاوڕێیان</p>
         
-        <input type="text" id="username" placeholder="ناوەکەت لێرە بنووسە..." maxlength="15">
+        <div class="input-group">
+            <label>👤 ناوی بەکارهێنەر</label>
+            <input type="text" id="username" placeholder="ناوەکەت بنووسە...">
+        </div>
+
+        <div class="input-group">
+            <label>🔒 تێپەڕەوشە (Password)</label>
+            <input type="password" id="password" placeholder="••••">
+        </div>
+
+        <p id="error" class="error-msg">❌ ناو یان تێپەڕەوشە هەڵەیە!</p>
         
-        <button onclick="startApp()">دەستپێکردن 🚀</button>
-        
-        <p class="footer-text">خۆشترین کات لەگەڵ هاوڕێکانت بەسەر ببە</p>
+        <button onclick="login()">چوونەژوورەوە 🚀</button>
     </div>
 
     <script>
-        function startApp() {
-            const nameInput = document.getElementById('username');
-            const name = nameInput.value.trim();
+        // لیستی بەکارهێنەرە ڕێپێدراوەکان
+        const users = {
+            "مەڕوا": "1234",
+            "محمد": "1234",
+            "ئەشڕەف": "1234",
+            "ژوان": "1234"
+        };
 
-            if (name.length < 2) {
-                alert("تکایە ناوێک بنووسە کە لە ٢ پیت کەمتر نەبێت");
-                return;
+        function login() {
+            const name = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
+            const errorElement = document.getElementById('error');
+
+            // پشکنینی ناو و تێپەڕەوشە
+            if (users[name] && users[name] === pass) {
+                // پاشەکەوتکردنی ناوەکە
+                localStorage.setItem('currentUser', name);
+                // ناردن بۆ پەیجی سەرەکی
+                window.location.href = 'index.html';
+            } else {
+                // پیشاندانی هەڵە
+                errorElement.style.display = 'block';
+                // لادانی هەڵە دوای ٣ چرکە
+                setTimeout(() => { errorElement.style.display = 'none'; }, 3000);
             }
-
-            // پاشەکەوتکردنی ناوەکە لەناو مۆبایلەکە
-            localStorage.setItem('currentUser', name);
-
-            // ناردنی یاریزانەکە بۆ لاپەڕەی سەرەکی
-            window.location.href = 'index.html';
         }
 
-        // ئەگەر یاریزانەکە پێشتر ناوی نووسیبوو، ڕاستەوخۆ بچێتە ناو یاری
+        // ئەگەر پێشتر داخل ببوو، پێویست بە لۆگین ناکات
         window.onload = function() {
             if (localStorage.getItem('currentUser')) {
                 window.location.href = 'index.html';

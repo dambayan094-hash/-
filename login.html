@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ku">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>باڵی هاوڕێیان</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body onclick="initHomeAudio()">
+
+    <div class="stars" id="starsCont"></div>
+    <div class="moon"></div>
+
+    <!-- Notification -->
+    <div id="notification">
+        <div id="notifText">...</div>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button id="notifAccept" class="btn-accept">Accept</button>
+            <button onclick="closeNotif()" class="btn-reject">✕</button>
+        </div>
+    </div>
+
+    <!-- Sidebar Friends (Left) -->
+    <div id="sidebar">
+        <button class="close-sidebar-btn" onclick="toggleSidebar()">گەڕانەوە ✕</button>
+        <h3 class="sidebar-title">هاوڕێکان 👥</h3>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="ناوی هاوڕێ...">
+            <button class="search-btn" onclick="searchUser()">🔍</button>
+        </div>
+        <div id="searchResult"></div>
+        <div id="requestsArea" style="display: none; margin-top: 15px;">
+            <span class="list-title">Inbox:</span>
+            <div id="requestsList"></div>
+        </div>
+        <div class="friend-list-area">
+            <span class="list-title">هاوڕێکانت:</span>
+            <div id="friendsList"></div>
+        </div>
+    </div>
+
+    <!-- Top Bar -->
+    <div class="header-bar">
+        <div class="header-left">
+            <button class="btn-circle" onclick="openM('settingsModal')">⚙️</button>
+            <button class="btn-circle" onclick="toggleSidebar()">👥</button>
+        </div>
+        <div class="header-logo">باڵی هاوڕێیان</div>
+        <div class="header-right" onclick="openM('profileModal')">
+            <span id="topName">...</span>
+            <img id="topAvatar" src="" class="user-avatar-top">
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="welcome-card">
+            <h1>بەخێربێن بۆ باڵی هاوڕێیان</h1>
+        </div>
+
+        <div class="games-grid">
+            <a href="game1-online.html" class="game-card card-blue">
+                <img src="https://cdn-icons-png.flaticon.com/512/1023/1023656.png" class="game-icon-img">
+                <h2>یاری یەکەم</h2>
+            </a>
+            <a href="game2.html" class="game-card card-purple">
+                <img src="https://cdn-icons-png.flaticon.com/512/1162/1162251.png" class="game-icon-img">
+                <h2>یاری دووەم</h2>
+            </a>
+        </div>
+
+        <div id="teamArea">
+            <h3 class="gold-text">تیمی ئامادە 🎮</h3>
+            <div class="team-players">
+                <div class="member"><img id="teamAv1" src="" class="team-av"><div id="teamN1"></div></div>
+                <div class="vs-text">VS</div>
+                <div class="member"><img id="teamAv2" src="" class="team-av"><div id="teamN2"></div></div>
+            </div>
+            <button id="startTeamGame" class="btn-start-team" style="display:none;">دەستپێکردنی یاری ٢ 🚀</button>
+            <button class="btn-leave-team" onclick="leaveTeam()">هەڵوەشاندنەوەی تیم</button>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeM('profileModal')">✕</button>
+            <h2 class="gold-text">پڕۆفایل</h2>
+            <div class="profile-main">
+                <img id="midAvatar" src="" class="mid-avatar">
+                <h3 id="midName"></h3>
+            </div>
+            <span class="list-title">گۆڕینی وێنە:</span>
+            <div class="avatar-grid" id="avGrid"></div>
+            <button class="btn-logout" onclick="logout()">🚪 دەرچوون</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content border-blue">
+            <button class="modal-close" onclick="closeM('settingsModal')">✕</button>
+            <h2 class="blue-text">ڕێکخستنەکان</h2>
+            <div class="setting-item">
+                <span>🎵 میوزیکی پاشبنەما</span>
+                <button id="msBtn" onclick="tglMus()" class="toggle-btn">پێکراوە</button>
+            </div>
+            <div class="setting-item">
+                <span>🔊 دەنگی یاری</span>
+                <input type="range" id="vSlide" min="0" max="1" step="0.1" onchange="svSet()">
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

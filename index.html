@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ku">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>PITO - باڵی هاوڕێیان</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        :root { --pito-red: #e61e25; --pito-light: #f2f2f7; --text-dark: #1c1c1e; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body { 
+            background: #0b0b0b; 
+            min-height: 100vh;
+            display: flex; justify-content: center;
+            overflow-x: hidden;
+        }
+
+        /* 📱 Responsive Wrapper */
+        .app-wrapper {
+            width: 100%;
+            max-width: 500px;
+            background-color: var(--pito-red);
+            min-height: 100vh;
+            position: relative;
+            display: flex; flex-direction: column;
+            direction: rtl;
+            box-shadow: 0 0 60px rgba(0,0,0,0.5);
+        }
+
+        /* Background Effects */
+        .stars-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        .star { position: absolute; background: white; border-radius: 50%; animation: twinkle var(--duration) infinite; }
+        .moon { position: absolute; top: 60px; left: 30px; width: 45px; height: 45px; background: #fffde7; border-radius: 50%; box-shadow: 0 0 20px white; z-index: 1; opacity: 0.6; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+        /* Header */
+        .header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 10px 20px; height: 65px; color: white; position: sticky; top: 0; z-index: 1000; background: var(--pito-red);
+        }
+        .header-btn { background: rgba(255,255,255,0.2); border: none; color: white; width: 38px; height: 38px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .logo-text { font-size: 26px; font-weight: 900; letter-spacing: 2px; }
+
+        /* Main Content Sheet */
+        .main-sheet { 
+            background-color: var(--pito-light); 
+            border-radius: 35px 35px 0 0; 
+            flex: 1;
+            padding: 20px 15px; 
+            margin-top: 5px;
+            position: relative; z-index: 10;
+            padding-bottom: 150px; /* Space for team bar and nav */
+        }
+
+        /* Banner */
+        .promo-banner { width: 100%; height: 135px; background: #000; border-radius: 25px; margin-bottom: 20px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.1); }
+        .promo-banner img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
+        .banner-label { position: absolute; bottom: 15px; right: 20px; color: white; font-weight: 900; font-size: 18px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+
+        /* Game Grid - 3 Columns (PITO Style) */
+        .game-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .game-card { display: flex; flex-direction: column; align-items: center; text-decoration: none; }
+        .game-box { width: 100%; aspect-ratio: 1/1.25; background: white; border-radius: 22px; display: flex; align-items: center; justify-content: center; border: 1px solid #e5e5ea; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 8px; overflow: hidden; }
+        .game-box img { width: 60%; height: auto; transition: 0.2s; }
+        .game-card:active .game-box img { transform: scale(0.85); }
+        .game-name { color: var(--text-dark); font-weight: 800; font-size: 12px; text-align: center; }
+
+        /* 👥 PUBG Team Lobby Bar */
+        #teamLobbyBar {
+            position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%);
+            width: calc(100% - 30px); max-width: 470px;
+            background: #1c1c1e; border-radius: 25px; padding: 12px 20px;
+            z-index: 1100; border: 2px solid var(--pito-red);
+            display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp { from { transform: translate(-50%, 20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+        .team-members { display: flex; justify-content: center; gap: 12px; margin-bottom: 12px; }
+        .team-av { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--pito-red); background: #2c2c2e; }
+        .btn-start-large { background: var(--pito-red); color: white; border: none; width: 100%; padding: 12px; border-radius: 15px; font-weight: 900; font-size: 20px; cursor: pointer; }
+
+        /* 🧭 Bottom Tab Bar */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 500px; height: 75px;
+            background: white; border-top: 1px solid #e5e5ea; 
+            display: flex; justify-content: space-around; align-items: center; z-index: 1200;
+        }
+        .nav-item { font-size: 26px; color: #c7c7cc; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+        .nav-item.active { color: var(--pito-red); }
+        .nav-main { 
+            background: var(--pito-red); width: 55px; height: 55px; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 30px; margin-top: -45px; border: 6px solid white;
+            box-shadow: 0 5px 15px rgba(230,30,37,0.3);
+        }
+
+        /* Modals */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-content { background: white; width: 92%; max-width: 400px; padding: 25px; border-radius: 30px; position: relative; color: #333; }
+        .close-x { position: absolute; top: 15px; left: 15px; font-size: 24px; cursor: pointer; color: #bbb; }
+
+        /* Sidebar Friends */
+        #friendsSidebar { position: fixed; top: 0; left: 0; width: 300px; height: 100%; background: white; z-index: 4000; transform: translateX(-100%); transition: 0.3s ease; padding: 20px; box-shadow: 10px 0 40px rgba(0,0,0,0.2); }
+        #friendsSidebar.open { transform: translateX(0); }
+        .friend-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f2f2f7; }
+        .f-av { width: 38px; height: 38px; border-radius: 50%; margin-left: 10px; border: 1px solid #eee; }
+        .btn-invite-sm { background: var(--pito-red); color: white; border: none; padding: 6px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 11px; }
+
+        .search-box { display: flex; gap: 5px; margin-bottom: 20px; }
+        .search-box input { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid #e5e5ea; background: #f2f2f7; outline: none; }
+    </style>
+</head>
+<body id="mainBody" onclick="startAudio()">
+
+    <div class="app-wrapper">
+        <div class="stars-bg" id="starsCont"></div>
+        <div class="moon"></div>
+
+        <!-- Header -->
+        <div class="header">
+            <button class="header-btn" onclick="openM('settingsModal')">⚙️</button>
+            <div class="logo-text">PITO</div>
+            <div class="header-btn" style="background:none;"></div> <!-- Placeholder -->
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-sheet">
+            <div id="normalView">
+                <div class="promo-banner">
+                    <img src="https://img.freepik.com/free-vector/gaming-background-with-stylish-neon-lights_1017-30377.jpg">
+                    <div class="banner-label">باڵی هاوڕێیان</div>
+                </div>
+
+                <div class="game-grid">
+                    <a href="game1-online.html" class="game-card">
+                        <div class="game-box" style="background:#eef2ff;"><img src="https://cdn-icons-png.flaticon.com/512/1023/1023656.png"></div>
+                        <div class="game-name">بەخت</div>
+                    </a>
+                    <a href="game2.html" class="game-card">
+                        <div class="game-box" style="background:#fff1f2;"><img src="https://cdn-icons-png.flaticon.com/512/1162/1162251.png"></div>
+                        <div class="game-name">زیرەکی</div>
+                    </a>
+                    <div class="game-card">
+                        <div class="game-box" style="opacity:0.3;"><img src="https://cdn-icons-png.flaticon.com/512/141/141044.png"></div>
+                        <div class="game-name">مافیا</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Lobby Bar -->
+            <div id="teamLobbyBar">
+                <div class="team-members" id="lobbyAvatars"></div>
+                <div id="selMapText" style="text-align:center; color:#8e8e93; font-size:12px; margin-bottom:10px; font-weight:bold;">یارییەک هەڵبژێرە</div>
+                <button id="realStartBtn" class="btn-start-large" onclick="startGameNow()">START 🚀</button>
+                <p onclick="leaveTeam()" style="color:#555; font-size:11px; text-align:center; margin-top:10px; cursor:pointer;">هەڵوەشاندنەوەی تیم</p>
+            </div>
+        </div>
+
+        <!-- 🧭 Bottom Navigation Tool Bar -->
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="location.reload()">🏠</div>
+            <div class="nav-item" onclick="toggleSidebar()">👥</div>
+            <div class="nav-main" onclick="openM('mapModal')">+</div>
+            <div class="nav-item">🏆</div>
+            <div class="nav-item" onclick="openM('profileModal')">👤</div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="friendsSidebar">
+        <button onclick="toggleSidebar()" class="btn-start-large" style="padding:10px; margin-bottom:20px;">داخستن ✕</button>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="ناوی هاوڕێ...">
+            <button class="header-btn" style="background:black;" onclick="searchUser()">🔍</button>
+        </div>
+        <div id="searchResult"></div>
+        <div id="friendsList"></div>
+    </div>
+
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <span class="close-x" onclick="closeM('profileModal')">✕</span>
+            <h3 style="text-align:center; margin-bottom:20px;">پڕۆفایل</h3>
+            <div style="text-align:center; margin-bottom:20px;">
+                <img id="midAvatar" src="" style="width:80px; height:80px; border-radius:50%; border:3px solid var(--pito-red);">
+                <h4 id="midName" style="margin-top:10px;"></h4>
+            </div>
+            <div id="avGrid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;"></div>
+            <button style="background:#e11d48; color:white; border:none; padding:15px; border-radius:15px; width:100%; margin-top:20px; font-weight:bold;" onclick="logout()">دەرچوون 🚪</button>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-x" onclick="closeM('settingsModal')">✕</span>
+            <h3 style="margin-bottom:20px;">ڕێکخستنەکان</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <span>🎵 میوزیکی پاشبنەما</span>
+                <button id="msBtn" style="background:#eee; border:none; padding:10px 15px; border-radius:12px; font-weight:bold;" onclick="tglMus()">پێکراوە</button>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span>🔊 دەنگی یاری</span>
+                <input type="range" id="vSlide" min="0" max="1" step="0.1" onchange="svSet()">
+            </div>
+        </div>
+    </div>
+
+    <div id="mapModal" class="modal">
+        <div class="modal-content">
+            <span class="close-x" onclick="closeM('mapModal')">✕</span>
+            <h3 style="text-align:center; margin-bottom:20px;">هەڵبژاردنی یاری</h3>
+            <div class="game-grid">
+                <div onclick="selectGame(1, 'خولانەوەی بەخت')" style="text-align:center; cursor:pointer;">🎰<br><small>یاری ١</small></div>
+                <div onclick="selectGame(2, 'پێشبڕکێی زیرەکی')" style="text-align:center; cursor:pointer;">🧠<br><small>یاری ٢</small></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" style="position:fixed; top:20px; left:20px; right:20px; background:#111; color:#fff; padding:15px; border-radius:20px; z-index:5000; display:none; border:2px solid var(--pito-red);">
+        <div id="notifText"></div>
+        <button id="notifAccept" style="background:#10b981; color:white; border:none; padding:12px; border-radius:12px; width:100%; margin-top:10px; font-weight:bold;">قبوڵکردن</button>
+    </div>
+
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyAVUxyWwAuY_ZnwjFC9WZp1NVp1l815a4c", authDomain: "yari-online.firebaseapp.com", databaseURL: "https://yari-online-default-rtdb.firebaseio.com", projectId: "yari-online", storageBucket: "yari-online.firebasestorage.app", messagingSenderId: "503368361126", appId: "1:503368361126:web:09028d371b17372e320067" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let curU = localStorage.getItem('currentUser'), curA = localStorage.getItem('userAvatar') || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky";
+        const bgMusic = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3');
+        bgMusic.loop = true; let aStarted = false;
+        let currentTeamID = null;
+
+        if(!curU) window.location.href = 'login.html';
+
+        function openM(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeM(id) { document.getElementById(id).style.display = 'none'; }
+        function toggleSidebar() { document.getElementById('friendsSidebar').classList.toggle('open'); }
+        function logout() { localStorage.clear(); window.location.href='login.html'; }
+
+        function startAudio() { if(!aStarted) { if(localStorage.getItem('music') !== 'off') bgMusic.play().catch(()=>{}); bgMusic.volume = localStorage.getItem('volume') || 0.5; aStarted = true; } }
+        function tglMus() {
+            let m = localStorage.getItem('music') === 'off' ? 'on' : 'off';
+            localStorage.setItem('music', m);
+            document.getElementById('msBtn').innerText = m === 'on' ? 'پێکراوە' : 'کوژاوەتەوە';
+            if(m === 'on') bgMusic.play(); else bgMusic.pause();
+        }
+        function svSet() { localStorage.setItem('volume', document.getElementById('vSlide').value); bgMusic.volume = document.getElementById('vSlide').value; }
+
+        async function searchUser() {
+            const n = document.getElementById('searchInput').value.trim();
+            if(!n || n===curU) return;
+            db.ref('users').orderByChild('name').equalTo(n).once('value', s => {
+                const res = document.getElementById('searchResult');
+                if(s.exists()){
+                    const u = Object.values(s.val())[0];
+                    res.innerHTML = `<div class="friend-row"><div><img src="${u.avatar}" class="f-av">${u.name}</div><button class="btn-invite-sm" onclick="sendReq('${u.name}')">Add</button></div>`;
+                } else res.innerHTML = "<small>نەدۆزرایەوە!</small>";
+            });
+        }
+        async function sendReq(t) { await db.ref(`requests/${t}/${curU}`).set({from:curU, avatar:curA}); alert("نێردرا!"); }
+        async function acceptReq(id, av) { await db.ref(`friends/${curU}/${id}`).set({ avatar: av }); await db.ref(`friends/${id}/${curU}`).set({ avatar: curA }); await db.ref(`requests/${curU}/${id}`).remove(); }
+        async function inviteToTeam(tid) { const teamID = "team_"+curU; currentTeamID = teamID; await db.ref('teams/'+teamID).set({ p1:curU, p1Av:curA, p2:"", p3:"", p4:"", status:'lobby', selectedGame: 0 }); await db.ref('teamInvites/'+tid).set({ from:curU, teamID: teamID }); alert("بانگێشت نێردرا!"); }
+        async function acceptTeam(d) {
+            const teamSnap = await db.ref('teams/'+d.teamID).get();
+            if(teamSnap.exists()){
+                const team = teamSnap.val();
+                let slot = team.p2===""?"p2":(team.p3===""?"p3":(team.p4===""?"p4":""));
+                if(slot){ await db.ref(`teams/${d.teamID}/${slot}`).set(curU); await db.ref(`teams/${d.teamID}/${slot}Av`).set(curA); }
+            }
+            await db.ref('teamInvites/'+curU).remove();
+            document.getElementById('notification').style.display='none';
+        }
+        async function selectGame(id, name) { if(currentTeamID) { await db.ref('teams/'+currentTeamID).update({ selectedGame: id, gameName: name }); closeM('mapModal'); } }
+        async function startGameNow() { if(currentTeamID) { const rID = Math.random().toString(36).substring(2, 7).toUpperCase(); await db.ref('teams/'+currentTeamID).update({ status: 'gaming', roomID: rID }); setTimeout(() => db.ref('teams/'+currentTeamID).remove(), 2000); } }
+        async function leaveTeam() { if(currentTeamID) await db.ref('teams/'+currentTeamID).remove(); location.reload(); }
+
+        function init() {
+            document.getElementById('midAvatar').src = curA; document.getElementById('midName').innerText = curU;
+            db.ref('users/'+curU).set({name:curU, avatar:curA, status:'online'}); db.ref('users/'+curU).onDisconnect().remove();
+
+            db.ref('friends/'+curU).on('value', snap => {
+                const f = snap.val(); const list = document.getElementById('friendsList'); list.innerHTML = "";
+                if(f) for(let id in f) list.innerHTML += `<div class="friend-row"><div><img src="${f[id].avatar}" class="f-av">${id}</div><button class="btn-invite-sm" onclick="inviteToTeam('${id}')">Invite</button></div>`;
+            });
+
+            db.ref('teamInvites/'+curU).on('value', s => {
+                const d = s.val(); if(d) { document.getElementById('notification').style.display='block'; document.getElementById('notifText').innerHTML = d.from + " بانگی کردیت!"; document.getElementById('notifAccept').onclick = () => acceptTeam(d); }
+            });
+
+            db.ref('teams').on('value', s => {
+                const teams = s.val(); let inT = false;
+                for (let id in teams) {
+                    const t = teams[id];
+                    if (t.p1 === curU || t.p2 === curU || t.p3 === curU || t.p4 === curU) {
+                        inT = true; currentTeamID = id;
+                        document.getElementById('normalView').style.display = 'none';
+                        document.getElementById('teamLobbyBar').style.display = 'block';
+                        const lobbyAvs = document.getElementById('lobbyAvatars'); lobbyAvs.innerHTML = "";
+                        for(let i=1; i<=4; i++) if(t["p"+i]) lobbyAvs.innerHTML += `<img src="${t['p'+i+'Av']}" class="team-av">`;
+                        if(t.selectedGame > 0) document.getElementById('selMapText').innerText = "Map: " + t.gameName;
+                        if (t.p1 === curU && t.selectedGame > 0) document.getElementById('realStartBtn').style.display = 'block';
+                        if (t.status === 'gaming') window.location.href = `${t.selectedGame===1?'game1-online.html':'game2.html'}?join=${t.roomID}&teamID=${id}`;
+                    }
+                }
+                if (!inT) { document.getElementById('normalView').style.display = 'block'; document.getElementById('teamLobbyBar').style.display = 'none'; }
+            });
+
+            const g = document.getElementById('avGrid'); g.innerHTML = "";
+            for(let i=1; i<=8; i++) {
+                let u = `https://api.dicebear.com/7.x/avataaars/svg?seed=P${i+200}`;
+                let im = document.createElement('img'); im.src = u; im.className = 'av-opt'; im.style.width="100%"; im.onclick = () => { localStorage.setItem('userAvatar', u); location.reload(); };
+                g.appendChild(im);
+            }
+        }
+        init();
+
+        const sCont = document.getElementById('starsCont');
+        for(let i=0; i<80; i++) {
+            const s = document.createElement('div'); s.className = 'star';
+            let sz = Math.random() * 3 + 1; s.style.width = sz + 'px'; s.style.height = sz + 'px';
+            s.style.left = Math.random() * 100 + '%'; s.style.top = Math.random() * 100 + '%';
+            s.style.setProperty('--duration', (Math.random() * 3 + 1.5) + 's');
+            sCont.appendChild(s);
+        }
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>یاری دووەم - ماڵی هاوڕێیان</title>
+    <title>یاری دووەم - باڵی هاوڕێیان</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -32,8 +32,10 @@
         .option-btn.wrong { background: #991b1b !important; border-color: #f87171 !important; color: white; }
         
         .action-btn { width: 100%; padding: 16px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; background: var(--led-blue); color: #000; font-size: 16px; margin-top: 10px; }
-
         #countdownOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11,17,32,0.98); border-radius: 25px; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 100; text-align: center; padding: 20px; }
+        #cdText { color: var(--led-gold); font-weight: bold; margin-bottom: 10px; font-size: 18px; }
+        #cdNum { font-size: 28px; font-weight: bold; color: white; }
+        
         #statusLoader { text-align: center; color: var(--led-blue); padding: 40px; font-weight: bold; }
     </style>
 </head>
@@ -41,20 +43,17 @@
     <div class="stars-container" id="starsCont"></div>
 
     <div class="game-card">
-        <!-- Loader -->
-        <div id="statusLoader">تکایە بوەستە... پەیوەست دەبێت</div>
+        <div id="statusLoader" style="display:block;">تکایە بوەستە...</div>
 
-        <!-- Room Section (Only visible if no auto-join) -->
         <div id="roomSection" style="display:none;">
             <a href="index.html" class="back-home-btn">🏠 هۆم</a>
             <h2 style="text-align:center; color: var(--led-blue); margin-bottom: 20px;">🎮 کێبڕکێی زیرەکی</h2>
             <button class="action-btn" onclick="createR()">دروستکردنی ژوور</button>
             <div style="margin: 20px 0; text-align: center; color: #475569;">— یان —</div>
             <input type="text" id="joinIn" placeholder="کۆدی ژوور" style="width:100%; padding:16px; border-radius:50px; text-align:center; background:#050a18; color:white; border:1px solid #334155; margin-bottom: 15px; outline: none;">
-            <button class="action-btn" style="background:#10b981; color: white;" onclick="joinR()">چوونە ناو ژوور</button>
+            <button class="action-btn" style="background:#10b981; color: white;" onclick="joinR()">چوونە ناو ژوور ✅</button>
         </div>
 
-        <!-- Waiting Lobby -->
         <div id="waitingSection" style="display:none; text-align: center;">
             <a href="index.html" class="back-home-btn">🏠 گەڕانەوە</a>
             <div id="codeDisp" style="color:white; font-size:40px; font-weight:bold; letter-spacing:8px; margin: 20px 0;"></div>
@@ -62,7 +61,6 @@
             <button id="startBtn" class="action-btn" style="display:none; background:#8b5cf6; color:white;" onclick="startG()">START 🚀</button>
         </div>
 
-        <!-- Arena -->
         <div id="gameSection" style="display:none;">
             <div class="score-container" id="scoreBoard"></div>
             <div class="question-area">
@@ -71,7 +69,7 @@
                 <h3 id="qText" style="text-align:center; min-height:50px; font-size:18px;"></h3>
                 <div id="optionsCont" style="margin-top:10px;"></div>
             </div>
-            <button class="action-btn" style="background:#e11d48; color:white;" onclick="location.href='index.html'">📕 دەرچوون</button>
+            <button class="action-btn" style="background:#e11d48; color:white;" onclick="leaveGame()">📕 دەرچوون لە یاری</button>
         </div>
     </div>
 
@@ -79,7 +77,7 @@
     const tickS = new Audio('https://actions.google.com/sounds/v1/ui/click_on.ogg');
     const winS = new Audio('https://actions.google.com/sounds/v1/cartoon/clown_horn_accent.ogg');
     let aInit = false;
-    function initAudio() { if(!aInit) { tickS.play(); winS.play(); aInit = true; } }
+    function initAudio() { if(!aInit) { tickS.play(); tickS.pause(); winS.play(); winS.pause(); aInit = true; } }
     function playS(s) { if(localStorage.getItem('music')!=='off') { s.currentTime=0; s.play().catch(()=>{}); } }
 
     const firebaseConfig = { apiKey: "AIzaSyAVUxyWwAuY_ZnwjFC9WZp1NVp1l815a4c", authDomain: "yari-online.firebaseapp.com", databaseURL: "https://yari-online-default-rtdb.firebaseio.com", projectId: "yari-online", storageBucket: "yari-online.firebasestorage.app", messagingSenderId: "503368361126", appId: "1:503368361126:web:09028d371b17372e320067" };
@@ -94,51 +92,55 @@
         {text:"کێ وێنەی 'مۆنالیزا'ی کێشا؟",options:["پیکاسۆ","داڤینشی","ڤان گۆخ","مایکل ئەنجیلۆ"],correct:1}
     ];
 
-    let curU = localStorage.getItem('currentUser'), 
-        curAv = localStorage.getItem('userAvatar') || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky", 
-        curRoom = null, pNum = null, isL = false, lastQ = -1, lastRE = false, isChoiceLocked = false;
+    let curU = localStorage.getItem('currentUser'), curAv = localStorage.getItem('userAvatar') || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky", curRoom = null, pNum = null, isL = false, lastQ = -1, lastRE = false, isChoiceLocked = false;
 
-    // --- لۆژیکی یەکەمجار بۆ جۆینکردنی تیم ---
-    async function initGameEntry() {
+    window.addEventListener('load', async () => {
         const params = new URLSearchParams(window.location.search);
         const joinId = params.get('join');
-        
+        const teamID = params.get('teamID');
+
         if (joinId) {
-            curRoom = joinId;
-            const snap = await db.ref('rooms/'+joinId).get();
-            
-            if (!snap.exists()) {
-                // ئەگەر Host بووی و یەکەم کەس بووی کە گەیشتی، ژوورەکە دروست بکە
-                await db.ref('rooms/'+joinId).set({ p1:curU, p1Score:0, a1:-1, p1Av:curAv, p2:"", p2Score:0, a2:-1, p2Av:"", p3:"", p3Score:0, a3:-1, p3Av:"", p4:"", p4Score:0, a4:-1, p4Av:"", status:'waiting', qIndex:0, timeLeft:30, roundEnded:false });
-                pNum = 1;
-            } else {
-                let r = snap.val();
-                if(r.p1 === curU) pNum = 1;
-                else if(r.p2 === curU) pNum = 2;
-                else if(r.p3 === curU) pNum = 3;
-                else if(r.p4 === curU) pNum = 4;
-                else {
-                    let slot = r.p2===""?"p2":(r.p3===""?"p3":(r.p4===""?"p4":""));
-                    if(slot) {
-                        pNum = parseInt(slot[1]);
-                        await db.ref('rooms/'+joinId+'/'+slot).set(curU);
-                        await db.ref('rooms/'+joinId+'/'+slot+'Av').set(curAv);
-                    } else {
-                        alert("ژوورەکە پڕە");
-                        return location.href='index.html';
-                    }
-                }
-            }
-            document.getElementById('statusLoader').style.display = 'none';
-            listenR(joinId);
+            if(teamID) db.ref('teams/'+teamID).remove();
+            await handleAutoJoin(joinId);
         } else {
-            // ئەگەر بەبێ تیم هاتبوو، شاشەی ئاسایی نیشان بدە
             document.getElementById('statusLoader').style.display = 'none';
             document.getElementById('roomSection').style.display = 'block';
         }
+    });
+
+    async function handleAutoJoin(id) {
+        const s = await db.ref('rooms/'+id).get();
+        if (s.exists()){
+            let r = s.val();
+            if(r.p1 === curU) pNum = 1;
+            else if(r.p2 === curU) pNum = 2;
+            else if(r.p3 === curU) pNum = 3;
+            else if(r.p4 === curU) pNum = 4;
+            else {
+                let slot = r.p2===""?"p2":(r.p3===""?"p3":(r.p4===""?"p4":""));
+                if(slot) { pNum = parseInt(slot[1]); await db.ref('rooms/'+id+'/'+slot).set(curU); await db.ref('rooms/'+id+'/'+slot+'Av').set(curAv); }
+                else { alert("ژوورەکە پڕە!"); return location.href='index.html'; }
+            }
+            curRoom = id;
+            document.getElementById('statusLoader').style.display = 'none';
+            listenR(id);
+        }
     }
 
-    async function createR() { const id = Math.random().toString(36).substring(2, 7).toUpperCase(); curRoom = id; pNum = 1; await db.ref('rooms/'+id).set({ p1:curU, p1Score:0, a1:-1, p1Av:curAv, p2:"", p2Score:0, a2:-1, p2Av:"", p3:"", p4:"", status:'waiting', qIndex:0, timeLeft:30, roundEnded:false }); listenR(id); }
+    // --- لۆژیکی دەرچوون و سڕینەوەی ناو ---
+    async function leaveGame() {
+        if (curRoom && pNum) {
+            // سڕینەوەی ناو و ئاڤاتار لەو Slotـەی کە هی تۆ بووە
+            let updates = {};
+            updates[`p${pNum}`] = "";
+            updates[`p${pNum}Av`] = "";
+            updates[`a${pNum}`] = -1;
+            await db.ref('rooms/' + curRoom).update(updates);
+        }
+        window.location.href = 'index.html';
+    }
+
+    async function createR() { const id = Math.random().toString(36).substring(2, 7).toUpperCase(); curRoom = id; pNum = 1; await db.ref('rooms/'+id).set({ p1:curU, p1Score:0, a1:-1, p1Av:curAv, p2:"", p2Score:0, a2:-1, p2Av:"", p3:"", p3Score:0, a3:-1, p3Av:"", p4:"", p4Score:0, a4:-1, p4Av:"", status:'waiting', qIndex:0, timeLeft:30, roundEnded:false }); listenR(id); }
     async function joinR() { const id = document.getElementById('joinIn').value.toUpperCase(); if(id) { curRoom = id; listenR(id); } }
 
     function listenR(id) {
@@ -166,8 +168,14 @@
             lastRE = r.roundEnded;
             updateUI(r);
             if(pNum===1 && !r.roundEnded && !isL) {
-                let activeAns = (r.a1!==-1) && (r.p2==="" || r.a2!==-1) && (r.p3==="" || r.a3!==-1) && (r.p4==="" || r.a4!==-1);
-                if(activeAns && r.timeLeft > 5) db.ref('rooms/'+curRoom).update({timeLeft:5});
+                // تەنها ئەو یاریزانانەی کە هێشتا لە یارییەکە ماون (ناویان هەیە) پشکنینیان بۆ دەکرێت
+                let activePlayers = true;
+                if(r.p1 !== "" && r.a1 === -1) activePlayers = false;
+                if(r.p2 !== "" && r.a2 === -1) activePlayers = false;
+                if(r.p3 !== "" && r.a3 === -1) activePlayers = false;
+                if(r.p4 !== "" && r.a4 === -1) activePlayers = false;
+
+                if(activePlayers && r.timeLeft > 5) db.ref('rooms/'+curRoom).update({timeLeft:5});
                 if(r.timeLeft <= 0) { isL=true; handleRE(r); }
             }
         });
@@ -184,8 +192,15 @@
         const tD = document.getElementById('timerDisp');
         if(tD.innerText != r.timeLeft && r.timeLeft>0 && !r.roundEnded) playS(tickS);
         tD.innerText = r.timeLeft;
+
         const sB = document.getElementById('scoreBoard'); sB.innerHTML = "";
-        [1,2,3,4].forEach(i => { if(r["p"+i]) sB.innerHTML += `<div class="score-box ${(r['a'+i]!==-1 && !r.roundEnded)?'active':''}"><img src="${r['p'+i+'Av'] || curAv}" class="player-avatar"><div>${r["p"+i]}</div><div style="font-weight:bold;">${r["p"+i+"Score"]}</div></div>`; });
+        // تەنها ئەو یاریزانانە نیشان بدە کە هێشتا ناویان لە داتابەیس ماوە
+        [1,2,3,4].forEach(i => { 
+            if(r["p"+i] && r["p"+i] !== "") {
+                sB.innerHTML += `<div class="score-box ${(r['a'+i]!==-1 && !r.roundEnded)?'active':''}"><img src="${r['p'+i+'Av'] || curAv}" class="player-avatar"><div>${r["p"+i]}</div><div style="font-size:18px; font-weight:bold;">${r["p"+i+"Score"]}</div></div>`; 
+            }
+        });
+        
         const q = questions[r.qIndex];
         if(lastQ !== r.qIndex) { isChoiceLocked = false; }
         if(lastQ !== r.qIndex || r.roundEnded) {
@@ -216,10 +231,11 @@
     async function handleRE(r) {
         let ups = { roundEnded: true };
         const q = questions[r.qIndex];
-        [1,2,3,4].forEach(i => { if(r["p"+i] && r["a"+i] === q.correct) ups[`p${i}Score`] = r[`p${i}Score`]+1; });
+        [1,2,3,4].forEach(i => { if(r["p"+i] && r["p"+i] !== "" && r["a"+i] === q.correct) ups[`p${i}Score`] = r[`p${i}Score`]+1; });
         await db.ref('rooms/'+curRoom).update(ups);
         setTimeout(async () => {
             const snap = await db.ref('rooms/'+curRoom).get(); const rs = snap.val();
+            if(!rs) return;
             if(rs.qIndex+1 < questions.length) { await db.ref('rooms/'+curRoom).update({ qIndex:rs.qIndex+1, a1:-1, a2:-1, a3:-1, a4:-1, timeLeft:30, roundEnded:false }); isL=false; }
             else db.ref('rooms/'+curRoom).update({status:'ended'});
         }, 8500);
@@ -227,7 +243,7 @@
 
     function showF(r) {
         if(window.timerSet) clearInterval(window.timerSet);
-        let ps = []; [1,2,3,4].forEach(i => { if(r["p"+i]) ps.push({n:r["p"+i], s:r["p"+i+"Score"], av:r["p"+i+"Av"]}); });
+        let ps = []; [1,2,3,4].forEach(i => { if(r["p"+i] && r["p"+i] !== "") ps.push({n:r["p"+i], s:r["p"+i+"Score"], av:r["p"+i+"Av"]}); });
         ps.sort((a,b)=>b.s-a.s);
         const o = document.getElementById('countdownOverlay'); o.style.display='flex';
         document.getElementById('cdText').innerText = "کۆتایی یاری! ئەنجامی براوە...";
@@ -240,8 +256,6 @@
             }
         }, 1000);
     }
-
-    initGameEntry(); // بانگکردنی لۆژیکی سەرەکی
 
     const sC = document.getElementById('starsCont');
     for(let i=0;i<60;i++){ const s=document.createElement('div'); s.className='star'; let sz=Math.random()*2+1; s.style.width=sz+'px'; s.style.height=sz+'px'; s.style.left=Math.random()*100+'%'; s.style.top=Math.random()*100+'%'; s.style.setProperty('--duration', (Math.random()*3+2)+'s'); sC.appendChild(s); }

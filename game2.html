@@ -23,7 +23,7 @@
         .score-box.active { border-color: var(--led-gold); box-shadow: 0 0 15px var(--led-gold); transform: scale(1.05); }
         .player-avatar { width: 45px; height: 45px; border-radius: 50%; margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.1); background: #1e293b; }
         
-        .question-area { border: 2px solid var(--led-gold); border-radius: 25px; padding: 20px; margin-bottom: 20px; position: relative; background: rgba(0,0,0,0.3); min-height: 200px; }
+        .question-area { border: 2px solid var(--led-gold); border-radius: 25px; padding: 20px; margin-bottom: 20px; position: relative; background: rgba(0,0,0,0.3); }
         .timer-box { text-align:center; font-size:26px; font-weight:bold; color:var(--led-gold); margin-bottom:10px; }
 
         .option-btn { width: 100%; background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 15px; border-radius: 50px; cursor: pointer; margin: 6px 0; font-family: inherit; font-size: 15px; transition: 0.2s; }
@@ -32,28 +32,36 @@
         .option-btn.wrong { background: #991b1b !important; border-color: #f87171 !important; color: white; }
         
         .action-btn { width: 100%; padding: 16px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; background: var(--led-blue); color: #000; font-size: 16px; margin-top: 10px; }
+
         #countdownOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11,17,32,0.98); border-radius: 25px; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 100; text-align: center; padding: 20px; }
         #cdText { color: var(--led-gold); font-weight: bold; margin-bottom: 10px; font-size: 18px; }
         #cdNum { font-size: 28px; font-weight: bold; color: white; }
         
-        #statusLoader { text-align: center; color: var(--led-blue); padding: 50px; font-weight: bold; font-size: 18px; }
+        #statusLoader { text-align: center; color: var(--led-blue); padding: 40px; font-weight: bold; font-size: 18px; }
     </style>
 </head>
 <body onclick="initAudio()">
     <div class="stars-container" id="starsCont"></div>
-    <div class="game-card">
-        <!-- Loader Screen (Bypasses manual entry) -->
-        <div id="statusLoader">تکایە بوەستە... پەیوەست دەبێت</div>
 
-        <!-- Waiting Lobby (Auto-shown for teams) -->
+    <div class="game-card">
+        <div id="statusLoader">تکایە بوەستە...</div>
+
+        <div id="roomSection" style="display:none;">
+            <button class="back-home-btn" onclick="leaveGame()">🏠 هۆم</button>
+            <h2 style="text-align:center; color: var(--led-blue); margin-bottom: 20px;">🎮 کێبڕکێی زیرەکی</h2>
+            <button class="action-btn" onclick="createR()">دروستکردنی ژوور</button>
+            <div style="margin: 20px 0; text-align: center; color: #475569;">— یان —</div>
+            <input type="text" id="joinIn" placeholder="کۆدی ژوور" style="width:100%; padding:16px; border-radius:50px; text-align:center; background:#050a18; color:white; border:1px solid #334155; margin-bottom: 15px; outline: none;">
+            <button class="action-btn" style="background:#10b981; color: white;" onclick="joinR()">چوونە ناو ژوور ✅</button>
+        </div>
+
         <div id="waitingSection" style="display:none; text-align: center;">
-            <a href="index.html" class="back-home-btn" onclick="leaveGame()">🏠 گەڕانەوە</a>
+            <button class="back-home-btn" onclick="leaveGame()">🏠 گەڕانەوە</button>
             <div id="codeDisp" style="color:white; font-size:40px; font-weight:bold; letter-spacing:8px; margin: 20px 0;"></div>
             <div id="playerList" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:20px 0;"></div>
             <button id="startBtn" class="action-btn" style="display:none; background:#8b5cf6; color:white;" onclick="startG()">START 🚀</button>
         </div>
 
-        <!-- Game Arena -->
         <div id="gameSection" style="display:none;">
             <div class="score-container" id="scoreBoard"></div>
             <div class="question-area">
@@ -74,90 +82,81 @@
     function playS(s) { if(localStorage.getItem('music')!=='off') { s.currentTime=0; s.play().catch(()=>{}); } }
 
     const firebaseConfig = { apiKey: "AIzaSyAVUxyWwAuY_ZnwjFC9WZp1NVp1l815a4c", authDomain: "yari-online.firebaseapp.com", databaseURL: "https://yari-online-default-rtdb.firebaseio.com", projectId: "yari-online", storageBucket: "yari-online.firebasestorage.app", messagingSenderId: "503368361126", appId: "1:503368361126:web:09028d371b17372e320067" };
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const questions = [{text:"پایتەختی فەڕەنسا کام شارەیە؟",options:["لەندەن","پاریس","ڕۆما","بەرلین"],correct:1},{text:"گەورەترین وڵاتی جیهان کامەیە؟",options:["چین","ئەمریکا","ڕووسیا","کەنەدا"],correct:2},{text:"ئاڵای کوردستان لە چەند ڕەنگ پێکهاتووە؟",options:["٢","٣","٤","٥"],correct:2},{text:"درێژترین ڕووباری جیهان کامەیە؟",options:["نیل","ئەمازۆن","دیجلە","فوڕات"],correct:0},{text:"کێ وێنەی 'مۆنالیزا'ی کێشا؟",options:["پیکاسۆ","داڤینشی","ڤان گۆخ","مایکل ئەنجیلۆ"],correct:1}];
     
-    let curU = localStorage.getItem('currentUser'), 
-        curAv = localStorage.getItem('userAvatar') || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky", 
-        curRoom = null, pNum = null, isL = false, lastQ = -1, lastRE = false, isChoiceLocked = false;
+    let curU = localStorage.getItem('currentUser'), curAv = localStorage.getItem('userAvatar') || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky", curRoom = null, pNum = null, isL = false, lastQ = -1, lastRE = false, isChoiceLocked = false, teamID_Param = null;
 
-    // --- لۆژیکی سەرەکی بۆ جۆینکردنی بێ کێشەی ٣ و ٤ یاریزان ---
-    window.onload = async () => {
+    window.addEventListener('load', async () => {
         const params = new URLSearchParams(window.location.search);
         const joinId = params.get('join');
-        
+        teamID_Param = params.get('teamID');
+
         if (joinId) {
-            curRoom = joinId;
-            const snap = await db.ref('rooms/'+joinId).get();
-            
-            if (!snap.exists()) {
-                // تەنها بۆ Host
-                await db.ref('rooms/'+joinId).set({ p1:curU, p1Score:0, a1:-1, p1Av:curAv, p2:"", p2Score:0, a2:-1, p2Av:"", p3:"", p3Score:0, a3:-1, p3Av:"", p4:"", p4Score:0, a4:-1, p4Av:"", status:'waiting', qIndex:0, timeLeft:30, roundEnded:false, qList:[0,1,2,3,4] });
-                pNum = 1;
-            } else {
-                let r = snap.val();
-                // یەکەمجار بزانە ئایا ناوت لە Slotەکان هەیە (بۆ ئەوەی کەس دەرنەکرێت)
-                if(r.p1 === curU) pNum = 1;
-                else if(r.p2 === curU) pNum = 2;
-                else if(r.p3 === curU) pNum = 3;
-                else if(r.p4 === curU) pNum = 4;
-                else {
-                    // ئەگەر کەسێکی نوێیت، جێگەی بەتاڵ پڕ بکەرەوە بە شێوەیەکی توند
-                    if(r.p2 === "") pNum = 2;
-                    else if(r.p3 === "") pNum = 3;
-                    else if(r.p4 === "") pNum = 4;
-                    
-                    if(pNum) {
-                        let updates = {};
-                        updates[`p${pNum}`] = curU;
-                        updates[`p${pNum}Av`] = curAv;
-                        updates[`p${pNum}Score`] = 0;
-                        updates[`a${pNum}`] = -1;
-                        await db.ref('rooms/'+joinId).update(updates);
-                    } else {
-                        alert("ژوورەکە پڕە!");
-                        return location.href='index.html';
-                    }
-                }
-            }
-            document.getElementById('statusLoader').style.display = 'none';
-            document.getElementById('waitingSection').style.display = 'block';
-            listenR(joinId);
+            document.getElementById('roomSection').style.display = 'none';
+            document.getElementById('statusLoader').style.display = 'block';
+            await handleAutoJoin(joinId);
         } else {
-            location.href = 'index.html'; // ئەگەر بەبێ لینک هاتبوو بیگەڕێنەرەوە
+            document.getElementById('statusLoader').style.display = 'none';
+            document.getElementById('roomSection').style.display = 'block';
         }
-    };
+    });
+
+    async function handleAutoJoin(id) {
+        const snap = await db.ref('rooms/'+id).get();
+        curRoom = id;
+        if (!snap.exists()) {
+            await db.ref('rooms/'+id).set({ p1:curU, p1Score:0, a1:-1, p1Av:curAv, p2:"", p2Score:0, a2:-1, p2Av:"", p3:"", p3Score:0, a3:-1, p3Av:"", p4:"", p4Score:0, a4:-1, p4Av:"", status:'waiting', qIndex:0, timeLeft:30, roundEnded:false, qList:[0,1,2,3,4] });
+            pNum = 1;
+        } else {
+            let r = snap.val();
+            if(r.p1 === curU) pNum = 1;
+            else if(r.p2 === curU) pNum = 2;
+            else if(r.p3 === curU) pNum = 3;
+            else if(r.p4 === curU) pNum = 4;
+            else {
+                let slot = r.p2===""?"p2":(r.p3===""?"p3":(r.p4===""?"p4":""));
+                if(slot) { pNum = parseInt(slot[1]); await db.ref('rooms/'+id+'/'+slot).set(curU); await db.ref('rooms/'+id+'/'+slot+'Av').set(curAv); }
+                else { alert("ژوورەکە پڕە!"); return location.href='index.html'; }
+            }
+        }
+        document.getElementById('statusLoader').style.display = 'none';
+        listenR(id);
+    }
+
+    // --- لۆژیکی دەرچوونی جێگیر بۆ ئەوەی Loop نەکات ---
+    async function leaveGame() {
+        if (curRoom && pNum) {
+            let updates = {}; updates[`p${pNum}`] = ""; updates[`p${pNum}Av`] = ""; updates[`a${pNum}`] = -1; updates[`p${pNum}Score`] = 0;
+            await db.ref('rooms/' + curRoom).update(updates);
+        }
+        // سڕینەوەی تیم لە پەیجی هۆم بۆ ئەوەی ڕێگەت بدات بچیتەوە هۆم
+        if (teamID_Param) {
+            await db.ref('teams/' + teamID_Param).remove();
+        }
+        window.location.href = 'index.html';
+    }
+
+    async function createR() { const id = Math.random().toString(36).substring(2, 7).toUpperCase(); curRoom = id; pNum = 1; await db.ref('rooms/'+id).set({ p1:curU, p1Score:0, a1:-1, p1Av:curAv, p2:"", p2Score:0, a2:-1, p2Av:"", p3:"", p3Score:0, a3:-1, p3Av:"", p4:"", p4Score:0, a4:-1, p4Av:"", status:'waiting', qIndex:0, timeLeft:30, roundEnded:false, qList:[0,1,2,3,4] }); listenR(id); }
+    async function joinR() { const id = document.getElementById('joinIn').value.toUpperCase(); if(id) handleAutoJoin(id); }
 
     function listenR(id) {
+        document.getElementById('roomSection').style.display = 'none';
+        document.getElementById('waitingSection').style.display = 'block';
         document.getElementById('codeDisp').innerText = id;
         db.ref('rooms/'+id).on('value', snap => {
             const r = snap.val(); if(!r) return;
             const pL = document.getElementById('playerList'); pL.innerHTML = "";
             [1,2,3,4].forEach(i => { if(r["p"+i]) pL.innerHTML += `<div class="score-box active"><img src="${r['p'+i+'Av'] || curAv}" class="player-avatar"><br><span style="font-size:10px;">${r["p"+i]}</span></div>`; });
             if(pNum===1 && r.p2 && r.status === 'waiting') document.getElementById('startBtn').style.display = 'block';
-            if(r.status==='playing') { 
-                document.getElementById('waitingSection').style.display = 'none';
-                document.getElementById('gameSection').style.display = 'block';
-                startA(); 
-            }
+            if(r.status==='playing') { document.getElementById('waitingSection').style.display = 'none'; document.getElementById('gameSection').style.display = 'block'; startA(); }
             if(r.status==='ended') showF(r);
         });
     }
 
-    function startG() { 
-        let randomQs = [0,1,2,3,4]; // بۆ تاقیکردنەوە، دەتوانی لێرە لیستەکە درێژ بکەیتەوە
-        db.ref('rooms/'+curRoom).update({status:'playing', a1:-1, a2:-1, a3:-1, a4:-1, qIndex: 0, qList: randomQs}); 
-    }
-
-    async function leaveGame() {
-        if (curRoom && pNum) {
-            let updates = {}; updates[`p${pNum}`] = ""; updates[`p${pNum}Av`] = ""; updates[`a${pNum}`] = -1; updates[`p${pNum}Score`] = 0;
-            await db.ref('rooms/' + curRoom).update(updates);
-        }
-        window.location.href = 'index.html';
-    }
+    function startG() { db.ref('rooms/'+curRoom).update({status:'playing', a1:-1, a2:-1, a3:-1, a4:-1, qIndex: 0}); }
 
     function startA() {
         db.ref('rooms/'+curRoom).on('value', snap => {
@@ -166,19 +165,14 @@
             lastRE = r.roundEnded;
             updateUI(r);
             if(pNum===1 && !r.roundEnded && !isL) {
-                let allAns = true;
-                [1,2,3,4].forEach(i => { if(r["p"+i] !== "" && r["a"+i] === -1) allAns = false; });
-                if(allAns && r.timeLeft > 5) db.ref('rooms/'+curRoom).update({timeLeft:5});
+                // تەنها ئەو یاریزانانەی کە هێشتا لە یارییەکە ماون (ناویان هەیە) پشکنینیان بۆ دەکرێت
+                let activeAns = true;
+                [1,2,3,4].forEach(i => { if(r["p"+i] !== "" && r["a"+i] === -1) activeAns = false; });
+                if(activeAns && r.timeLeft > 5) db.ref('rooms/'+curRoom).update({timeLeft:5});
                 if(r.timeLeft <= 0) { isL=true; handleRE(r); }
             }
         });
-        if(pNum===1) {
-            if(window.timerSet) clearInterval(window.timerSet);
-            window.timerSet = setInterval(async () => {
-                const s = await db.ref('rooms/'+curRoom).get(); const r = s.val();
-                if(r && r.status==='playing' && !r.roundEnded && r.timeLeft > 0) db.ref('rooms/'+curRoom).update({timeLeft:r.timeLeft-1});
-            }, 1000);
-        }
+        if(pNum===1) { if(window.timerSet) clearInterval(window.timerSet); window.timerSet = setInterval(async () => { const s = await db.ref('rooms/'+curRoom).get(); const r = s.val(); if(r && r.status==='playing' && !r.roundEnded && r.timeLeft > 0) db.ref('rooms/'+curRoom).update({timeLeft:r.timeLeft-1}); }, 1000); }
     }
 
     function updateUI(r) {
@@ -186,23 +180,18 @@
         if(tD.innerText != r.timeLeft && r.timeLeft>0 && !r.roundEnded) playS(tickS);
         tD.innerText = r.timeLeft;
         const sB = document.getElementById('scoreBoard'); sB.innerHTML = "";
-        [1,2,3,4].forEach(i => { 
-            if(r["p"+i] && r["p"+i]!=="") {
-                const isAns = (r["a"+i] !== -1);
-                sB.innerHTML += `<div class="score-box ${(isAns && !r.roundEnded)?'active':''}"><img src="${r['p'+i+'Av'] || curAv}" class="player-avatar"><div>${r["p"+i]}</div><div style="font-weight:bold;">${r["p"+i+"Score"] || 0}</div></div>`; 
-            }
-        });
-        if(!r.qList) return;
-        const q = questions[r.qList[r.qIndex]];
+        [1,2,3,4].forEach(i => { if(r["p"+i] && r["p"+i]!=="") { const isAns = (r["a"+i] !== -1); sB.innerHTML += `<div class="score-box ${(isAns && !r.roundEnded)?'active':''}"><img src="${r['p'+i+'Av'] || curAv}" class="player-avatar"><div>${r["p"+i]}</div><div style="font-weight:bold;">${r["p"+i+"Score"] || 0}</div></div>`; } });
+        const q = questions[r.qIndex];
         if(lastQ !== r.qIndex) { isChoiceLocked = false; lastQ = r.qIndex; }
         if(lastQ === r.qIndex || r.roundEnded) {
             document.getElementById('qText').innerText = q.text;
             const c = document.getElementById('optionsCont'); c.innerHTML = "";
+            const pAns = r["a"+pNum];
             q.options.forEach((opt, i) => {
                 const b = document.createElement('button'); b.className = 'option-btn'; b.innerText = `${['A','B','C','D'][i]} - ${opt}`;
-                if(r["a"+pNum]===i) b.classList.add('selected');
-                b.disabled = (r["a"+pNum]!==-1) || r.roundEnded || isChoiceLocked;
-                if(r.roundEnded) { if(i===q.correct) b.classList.add('correct'); else if(i===r["a"+pNum]) b.classList.add('wrong'); }
+                if(pAns === i) b.classList.add('selected');
+                b.disabled = (pAns!==-1) || r.roundEnded || isChoiceLocked;
+                if(r.roundEnded) { if(i===q.correct) b.classList.add('correct'); else if(i===pAns) b.classList.add('wrong'); }
                 b.onclick = () => { if(isChoiceLocked) return; isChoiceLocked = true; playS(tickS); db.ref('rooms/'+curRoom+'/a'+pNum).set(i); };
                 c.appendChild(b);
             });
@@ -212,17 +201,13 @@
 
     function showO(r) {
         const o = document.getElementById('countdownOverlay'); const ct = document.getElementById('cdText'); const cn = document.getElementById('cdNum');
-        const q = questions[r.qList[r.qIndex]];
-        o.style.display = 'flex'; ct.innerText = "وەڵامی ڕاست:"; cn.innerText = q.options[q.correct];
-        setTimeout(() => {
-            ct.innerText = "ئامادەبە!"; let count = 5; cn.innerText = count;
-            let int = setInterval(() => { count--; if(count>0) { cn.innerText=count; playS(tickS); } else clearInterval(int); }, 1000);
-        }, 2500);
+        o.style.display = 'flex'; ct.innerText = "وەڵامی ڕاست:"; cn.innerText = questions[r.qIndex].options[questions[r.qIndex].correct];
+        setTimeout(() => { ct.innerText = "ئامادەبە!"; let count = 5; cn.innerText = count; let int = setInterval(() => { count--; if(count>0) { cn.innerText=count; playS(tickS); } else clearInterval(int); }, 1000); }, 2500);
     }
 
     async function handleRE(r) {
         let ups = { roundEnded: true };
-        const q = questions[r.qList[r.qIndex]];
+        const q = questions[r.qIndex];
         [1,2,3,4].forEach(i => { if(r["p"+i] && r["p"+i]!=="" && r["a"+i] === q.correct) ups[`p${i}Score`] = (r[`p${i}Score`] || 0) + 1; });
         await db.ref('rooms/'+curRoom).update(ups);
         setTimeout(async () => {

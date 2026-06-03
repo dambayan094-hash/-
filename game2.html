@@ -12,67 +12,51 @@
         body { margin: 0; padding: 15px; background: #050a18; color: white; font-family: 'Segoe UI', sans-serif; min-height: 100vh; overflow: hidden; direction: rtl; display: flex; justify-content: center; align-items: center; }
         .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
         .star { position: absolute; background: white; border-radius: 50%; animation: twinkle var(--duration) infinite; }
-        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-
-        .game-card { background-color: rgba(11, 17, 32, 0.96); border: 2px solid var(--led-blue); border-radius: 30px; padding: 25px; box-shadow: 0 0 30px var(--led-blue); position: relative; z-index: 10; width: 100%; max-width: 550px; min-height: 300px; display: flex; flex-direction: column; }
-        .back-home-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--led-blue); color: white; padding: 8px 20px; border-radius: 50px; cursor: pointer; text-decoration: none; font-size: 13px; display: inline-block; margin-bottom: 20px; align-self: flex-start; }
-
+        .game-card { background-color: rgba(11, 17, 32, 0.96); border: 2px solid var(--led-blue); border-radius: 30px; padding: 25px; box-shadow: 0 0 30px var(--led-blue); position: relative; z-index: 10; width: 100%; max-width: 550px; min-height: 250px; }
+        .back-home-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--led-blue); color: white; padding: 8px 20px; border-radius: 50px; cursor: pointer; text-decoration: none; font-size: 13px; display: inline-block; margin-bottom: 20px; outline: none; }
         .score-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
         @media (min-width: 480px) { .score-container { grid-template-columns: repeat(4, 1fr); } }
-        .score-box { border: 2px solid #334155; border-radius: 18px; padding: 10px; text-align: center; background: rgba(255,255,255,0.02); }
-        .score-box.active { border-color: var(--led-gold); box-shadow: 0 0 15px var(--led-gold); }
+        .score-box { border: 2px solid #334155; border-radius: 18px; padding: 10px; text-align: center; background: rgba(255,255,255,0.02); transition: 0.3s; }
+        .score-box.active { border-color: var(--led-gold); box-shadow: 0 0 15px var(--led-gold); transform: scale(1.05); }
         .player-avatar { width: 45px; height: 45px; border-radius: 50%; margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.1); background: #1e293b; }
-        
-        .question-area { border: 2px solid var(--led-gold); border-radius: 25px; padding: 20px; margin-bottom: 20px; position: relative; background: rgba(0,0,0,0.3); flex: 1; }
+        .question-area { border: 2px solid var(--led-gold); border-radius: 25px; padding: 20px; margin-bottom: 20px; position: relative; background: rgba(0,0,0,0.3); }
         .timer-box { text-align:center; font-size:26px; font-weight:bold; color:var(--led-gold); margin-bottom:10px; }
-
         .option-btn { width: 100%; background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 15px; border-radius: 50px; cursor: pointer; margin: 6px 0; font-family: inherit; font-size: 15px; transition: 0.2s; }
-        .option-btn.selected { background: var(--led-blue); color: white; border-color: white; }
-        .option-btn.correct { background: #166534 !important; border-color: #4ade80 !important; }
-        .option-btn.wrong { background: #991b1b !important; border-color: #f87171 !important; }
-        
+        .option-btn.selected { background: var(--led-blue); color: white; border-color: white; box-shadow: 0 0 10px var(--led-blue); }
+        .option-btn.correct { background: #166534 !important; border-color: #4ade80 !important; color: white; }
+        .option-btn.wrong { background: #991b1b !important; border-color: #f87171 !important; color: white; }
         .action-btn { width: 100%; padding: 16px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; background: var(--led-blue); color: #000; font-size: 16px; margin-top: 10px; }
-        #countdownOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11,17,32,0.98); border-radius: 25px; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 100; text-align: center; }
-        
-        #globalLoader { text-align: center; margin: auto; color: var(--led-blue); font-weight: bold; }
+        #countdownOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11,17,32,0.98); border-radius: 25px; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 100; text-align: center; padding: 20px; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
     </style>
 </head>
 <body onclick="initAudio()">
     <div class="stars-container" id="starsCont"></div>
-
-    <div class="game-card" id="mainCard">
-        <!-- دوگمەی گەڕانەوە هەمیشە دیارە -->
-        <button class="back-home-btn" onclick="goHome()">🏠 گەڕانەوە بۆ هۆم</button>
-
-        <!-- Loader -->
-        <div id="globalLoader">تکایە بوەستە...</div>
-
-        <!-- Room Section -->
+    <div class="game-card">
+        <div id="statusLoader">تکایە بوەستە...</div>
         <div id="roomSection" style="display:none;">
+            <a href="index.html" class="back-home-btn">🏠 هۆم</a>
             <h2 style="text-align:center; color: var(--led-blue); margin-bottom: 20px;">🎮 کێبڕکێی زیرەکی</h2>
             <button class="action-btn" onclick="createR()">دروستکردنی ژوور</button>
             <div style="margin: 20px 0; text-align: center; color: #475569;">— یان —</div>
             <input type="text" id="joinIn" placeholder="کۆدی ژوور" style="width:100%; padding:16px; border-radius:50px; text-align:center; background:#050a18; color:white; border:1px solid #334155; margin-bottom: 15px; outline: none;">
             <button class="action-btn" style="background:#10b981; color: white;" onclick="joinR()">چوونە ناو ژوور ✅</button>
         </div>
-
-        <!-- Waiting Lobby -->
         <div id="waitingSection" style="display:none; text-align: center;">
-            <div id="codeDisp" style="color:white; font-size:40px; font-weight:bold; letter-spacing:8px; margin-bottom: 20px;"></div>
+            <a href="index.html" class="back-home-btn">🏠 گەڕانەوە</a>
+            <div id="codeDisp" style="color:white; font-size:40px; font-weight:bold; letter-spacing:8px; margin: 20px 0;"></div>
             <div id="playerList" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:20px 0;"></div>
             <button id="startBtn" class="action-btn" style="display:none; background:#8b5cf6; color:white;" onclick="startG()">START 🚀</button>
-            <p style="color:#94a3b8; font-size:12px; margin-top:10px;">چاوەڕێی هاوڕێکانت بکە...</p>
         </div>
-
-        <!-- Arena Section -->
         <div id="gameSection" style="display:none;">
             <div class="score-container" id="scoreBoard"></div>
             <div class="question-area">
-                <div id="countdownOverlay"><div id="cdText" style="color:var(--led-gold); font-weight:bold; margin-bottom:10px;"></div><div id="cdNum" style="font-size:24px; color:white;"></div></div>
+                <div id="countdownOverlay"><div id="cdText" style="color:var(--led-gold); font-weight:bold;"></div><div id="cdNum" style="font-size:24px; color:white;"></div></div>
                 <div class="timer-box">⏱️ <span id="timerDisp">30</span></div>
                 <h3 id="qText" style="text-align:center; min-height:50px; font-size:18px;"></h3>
                 <div id="optionsCont" style="margin-top:10px;"></div>
             </div>
+            <button class="action-btn" style="background:#e11d48; color:white;" onclick="leaveGame()">📕 دەرچوون</button>
         </div>
     </div>
 
@@ -87,40 +71,35 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const questions = [{text:"پایتەختی فەڕەنسا کام شارەیە؟",options:["لەندەن","پاریس","ڕۆما","بەرلین"],correct:1},{text:"گەورەترین وڵاتی جیهان کامەیە؟",options:["چین","ئەمریکا","ڕووسیا","کەنەدا"],correct:2},{text:"ئاڵای کوردستان لە چەند ڕەنگ پێکهاتووە؟",options:["٢","٣","٤","٥"],correct:2},{text:"درێژترین ڕووباری جیهان کامەیە؟",options:["نیل","ئەمازۆن","دیجلە","فوڕات"],correct:0},{text:"کێ وێنەی 'مۆنالیزا'ی کێشا؟",options:["پیکاسۆ","داڤینشی","ڤان گۆخ","مایکل ئەنجیلۆ"],correct:1}];
-    
-    let curU = localStorage.getItem('currentUser'), curAv = localStorage.getItem('userAvatar') || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky", curRoom = null, pNum = null, isL = false, lastQ = -1, lastRE = false, isChoiceLocked = false, currentTeamIDFromUrl = null;
+    // ٥٠٠ پرسیارەکان لێرە بن
+    const questions = [
+        {text:"پایتەختی فەڕەنسا کام شارەیە؟",options:["لەندەن","پاریس","ڕۆما","بەرلین"],correct:1},
+        {text:"گەورەترین وڵاتی جیهان کامەیە؟",options:["چین","ئەمریکا","ڕووسیا","کەنەدا"],correct:2},
+        {text:"ئاڵای کوردستان لە چەند ڕەنگ پێکهاتووە؟",options:["٢","٣","٤","٥"],correct:2},
+        {text:"درێژترین ڕووباری جیهان کامەیە؟",options:["نیل","ئەمازۆن","دیجلە","فوڕات"],correct:0},
+        {text:"کێ وێنەی 'مۆنالیزا'ی کێشا؟",options:["پیکاسۆ","داڤینشی","ڤان گۆخ","مایکل ئەنجیلۆ"],correct:1}
+        // ... لێرە هەموو ٥٠٠ پرسیارەکە دابنێ
+    ];
 
-    // --- لۆژیکی گەڕانەوەی پاک ---
-    async function goHome() {
-        if (curRoom && pNum) {
-            let updates = {};
-            updates[`p${pNum}`] = ""; updates[`p${pNum}Av`] = ""; updates[`a${pNum}`] = -1;
-            await db.ref('rooms/' + curRoom).update(updates);
-        }
-        if (currentTeamIDFromUrl) await db.ref('teams/' + currentTeamIDFromUrl).remove();
-        window.location.href = 'index.html';
-    }
+    let curU = localStorage.getItem('currentUser'), curAv = localStorage.getItem('userAvatar') || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky", curRoom = null, pNum = null, isL = false, lastQ = -1, lastRE = false, isChoiceLocked = false;
 
-    // --- دەستپێکی پەیج ---
-    window.onload = async () => {
+    window.addEventListener('load', async () => {
         const params = new URLSearchParams(window.location.search);
         const joinId = params.get('join');
-        currentTeamIDFromUrl = params.get('teamID');
-
+        const teamID = params.get('teamID');
         if (joinId) {
-            await handleAutoJoin(joinId);
+            if(teamID) db.ref('teams/'+teamID).remove();
+            setTimeout(async () => { await handleAutoJoin(joinId); }, 1000);
         } else {
             showView('roomSection');
         }
-    };
+    });
 
     async function handleAutoJoin(id) {
         const snap = await db.ref('rooms/'+id).get();
         curRoom = id;
-        
         if (!snap.exists()) {
-            await db.ref('rooms/'+id).set({ p1:curU, p1Score:0, a1:-1, p1Av:curAv, p2:"", p2Score:0, a2:-1, p2Av:"", p3:"", p3Score:0, a3:-1, p3Av:"", p4:"", p4Score:0, a4:-1, p4Av:"", status:'waiting', qIndex:0, timeLeft:30, roundEnded:false });
+            await db.ref('rooms/'+id).set({ p1:curU, p1Score:0, a1:-1, p1Av:curAv, p2:"", p2Score:0, a2:-1, p2Av:"", p3:"", p4:"", status:'waiting', qIndex:0, timeLeft:30, roundEnded:false, qList:[] });
             pNum = 1;
         } else {
             let r = snap.val();
@@ -130,27 +109,23 @@
             else if(r.p4 === curU) pNum = 4;
             else {
                 let slot = r.p2===""?"p2":(r.p3===""?"p3":(r.p4===""?"p4":""));
-                if(slot) {
-                    pNum = parseInt(slot[1]);
-                    let updates = {};
-                    updates[slot] = curU; updates[slot+'Av'] = curAv; updates[slot+'Score'] = 0; updates['a'+pNum] = -1;
-                    await db.ref('rooms/'+id).update(updates);
-                } else { alert("ژوورەکە پڕە"); return goHome(); }
+                if(slot) { pNum = parseInt(slot[1]); await db.ref('rooms/'+id+'/'+slot).set(curU); await db.ref('rooms/'+id+'/'+slot+'Av').set(curAv); }
+                else { alert("پڕە"); return location.href='index.html'; }
             }
         }
-        showView('waitingSection');
+        document.getElementById('statusLoader').style.display = 'none';
         listenR(id);
     }
 
     function showView(viewId) {
-        document.getElementById('globalLoader').style.display = 'none';
+        document.getElementById('statusLoader').style.display = 'none';
         document.getElementById('roomSection').style.display = 'none';
         document.getElementById('waitingSection').style.display = 'none';
         document.getElementById('gameSection').style.display = 'none';
         document.getElementById(viewId).style.display = 'block';
     }
 
-    async function createR() { const id = Math.random().toString(36).substring(2, 7).toUpperCase(); curRoom = id; pNum = 1; await db.ref('rooms/'+id).set({ p1:curU, p1Score:0, a1:-1, p1Av:curAv, p2:"", p2Score:0, a2:-1, p2Av:"", p3:"", p3Score:0, a3:-1, p3Av:"", p4:"", p4Score:0, a4:-1, p4Av:"", status:'waiting', qIndex:0, timeLeft:30, roundEnded:false }); listenR(id); showView('waitingSection'); }
+    async function createR() { const id = Math.random().toString(36).substring(2, 7).toUpperCase(); curRoom = id; pNum = 1; await db.ref('rooms/'+id).set({ p1:curU, p1Score:0, a1:-1, p1Av:curAv, p2:"", p2Score:0, a2:-1, p2Av:"", p3:"", p4:"", status:'waiting', qIndex:0, timeLeft:30, roundEnded:false, qList:[] }); listenR(id); showView('waitingSection'); }
     async function joinR() { const id = document.getElementById('joinIn').value.toUpperCase(); if(id) handleAutoJoin(id); }
 
     function listenR(id) {
@@ -165,7 +140,15 @@
         });
     }
 
-    function startG() { db.ref('rooms/'+curRoom).update({status:'playing', a1:-1, a2:-1, a3:-1, a4:-1}); }
+    function startG() { 
+        // دروستکردنی لیستێکی هەڕەمەکی لە ١٠ پرسیار
+        let randomQs = [];
+        while(randomQs.length < 10) {
+            let r = Math.floor(Math.random() * questions.length);
+            if(!randomQs.includes(r)) randomQs.push(r);
+        }
+        db.ref('rooms/'+curRoom).update({status:'playing', a1:-1, a2:-1, a3:-1, a4:-1, qIndex: 0, qList: randomQs}); 
+    }
 
     function startA() {
         db.ref('rooms/'+curRoom).on('value', snap => {
@@ -180,13 +163,7 @@
                 if(r.timeLeft <= 0) { isL=true; handleRE(r); }
             }
         });
-        if(pNum===1) {
-            if(window.timerSet) clearInterval(window.timerSet);
-            window.timerSet = setInterval(async () => {
-                const s = await db.ref('rooms/'+curRoom).get(); const r = s.val();
-                if(r && r.status==='playing' && !r.roundEnded && r.timeLeft > 0) db.ref('rooms/'+curRoom).update({timeLeft:r.timeLeft-1});
-            }, 1000);
-        }
+        if(pNum===1) { if(window.timerSet) clearInterval(window.timerSet); window.timerSet = setInterval(async () => { const s = await db.ref('rooms/'+curRoom).get(); const r = s.val(); if(r && r.status==='playing' && !r.roundEnded && r.timeLeft > 0) db.ref('rooms/'+curRoom).update({timeLeft:r.timeLeft-1}); }, 1000); }
     }
 
     function updateUI(r) {
@@ -194,8 +171,13 @@
         if(tD.innerText != r.timeLeft && r.timeLeft>0 && !r.roundEnded) playS(tickS);
         tD.innerText = r.timeLeft;
         const sB = document.getElementById('scoreBoard'); sB.innerHTML = "";
-        [1,2,3,4].forEach(i => { if(r["p"+i] && r["p"+i]!=="") { const isAns = (r["a"+i] !== -1); sB.innerHTML += `<div class="score-box ${(isAns && !r.roundEnded)?'active':''}"><img src="${r['p'+i+'Av'] || curAv}" class="player-avatar"><div>${r["p"+i]}</div><div style="font-weight:bold;">${r["p"+i+"Score"] || 0}</div></div>`; } });
-        const q = questions[r.qIndex];
+        [1,2,3,4].forEach(i => { if(r["p"+i] && r["p"+i]!=="") sB.innerHTML += `<div class="score-box ${(r['a'+i]!==-1 && !r.roundEnded)?'active':''}"><img src="${r['p'+i+'Av'] || curAv}" class="player-avatar"><div>${r["p"+i]}</div><div style="font-weight:bold;">${r["p"+i+"Score"] || 0}</div></div>`; });
+        
+        // وەرگرتنی پرسیار لە ناو لیستە هەڕەمەکییەکە
+        if(!r.qList) return;
+        const qIndexInArray = r.qList[r.qIndex];
+        const q = questions[qIndexInArray];
+
         if(lastQ !== r.qIndex) { isChoiceLocked = false; lastQ = r.qIndex; }
         if(lastQ === r.qIndex || r.roundEnded) {
             document.getElementById('qText').innerText = q.text;
@@ -214,18 +196,21 @@
 
     function showO(r) {
         const o = document.getElementById('countdownOverlay'); const ct = document.getElementById('cdText'); const cn = document.getElementById('cdNum');
-        o.style.display = 'flex'; ct.innerText = "وەڵامی ڕاست:"; cn.innerText = questions[r.qIndex].options[questions[r.qIndex].correct];
-        setTimeout(() => { ct.innerText = "ئامادەبە!"; let count = 5; cn.innerText = count; let int = setInterval(() => { count--; if(count>0) { cn.innerText=count; playS(tickS); } else clearInterval(int); }, 1000); }, 2500);
+        const qIndexInArray = r.qList[r.qIndex];
+        o.style.display = 'flex'; ct.innerText = "وەڵامی ڕاست:"; cn.innerText = questions[qIndexInArray].options[questions[qIndexInArray].correct];
+        setTimeout(() => { ct.innerText = "ئامادەبە!"; let c = 5; cn.innerText = c; let int = setInterval(() => { c--; if(c>0) { cn.innerText=c; playS(tickS); } else clearInterval(int); }, 1000); }, 2500);
     }
 
     async function handleRE(r) {
-        let ups = { roundEnded: true };
-        [1,2,3,4].forEach(i => { if(r["p"+i] && r["p"+i]!=="" && r["a"+i] === questions[r.qIndex].correct) ups[`p${i}Score`] = (r[`p${i}Score`] || 0) + 1; });
-        await db.ref('rooms/'+curRoom).update(ups);
+        let updates = { roundEnded: true };
+        const qIndexInArray = r.qList[r.qIndex];
+        const q = questions[qIndexInArray];
+        [1,2,3,4].forEach(i => { if(r["p"+i] && r["p"+i]!=="" && r["a"+i] === q.correct) updates[`p${i}Score`] = (r[`p${i}Score`] || 0) + 1; });
+        await db.ref('rooms/'+curRoom).update(updates);
         setTimeout(async () => {
             const snap = await db.ref('rooms/'+curRoom).get(); const rs = snap.val();
-            if(!rs) return;
-            if(rs.qIndex+1 < questions.length) { await db.ref('rooms/'+curRoom).update({ qIndex:rs.qIndex+1, a1:-1, a2:-1, a3:-1, a4:-1, timeLeft:30, roundEnded:false }); isL=false; }
+            // لێرە پشکنین دەکەین ئایا گەیشتینە ١٠ پرسیار
+            if(rs.qIndex + 1 < 10) { await db.ref('rooms/'+curRoom).update({ qIndex:rs.qIndex+1, a1:-1, a2:-1, a3:-1, a4:-1, timeLeft:30, roundEnded:false }); isL=false; }
             else db.ref('rooms/'+curRoom).update({status:'ended'});
         }, 8500);
     }
@@ -234,7 +219,15 @@
         if(window.timerSet) clearInterval(window.timerSet);
         let ps = []; [1,2,3,4].forEach(i => { if(r["p"+i] && r["p"+i]!=="") ps.push({n:r["p"+i], s:r["p"+i+"Score"] || 0, av:r["p"+i+"Av"]}); });
         ps.sort((a,b)=>b.s-a.s);
-        document.getElementById('gameSection').innerHTML = `<h2 style="text-align:center;color:var(--led-gold);margin-top:20px;">👑 براوە: ${ps[0].n}</h2><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0;">${ps.map(p=>`<div class="score-box active"><img src="${p.av || curAv}" class="player-avatar"><div>${p.n}</div><div style="font-weight:bold;">${p.s}</div></div>`).join('')}</div><button class="action-btn" onclick="goHome()">گەڕانەوە بۆ هۆم</button>`;
+        document.getElementById('gameSection').innerHTML = `<h2 style="text-align:center;color:var(--led-gold);margin-top:20px;">👑 براوە: ${ps[0].n}</h2><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0;">${ps.map(p=>`<div class="score-box active"><img src="${p.av || curAv}" class="player-avatar"><div>${p.n}</div><div style="font-weight:bold;">${p.s}</div></div>`).join('')}</div><button class="action-btn" onclick="location.href='index.html'">گەڕانەوە بۆ هۆم</button>`;
+    }
+
+    async function leaveGame() {
+        if (curRoom && pNum) {
+            let updates = {}; updates[`p${pNum}`] = ""; updates[`p${pNum}Av`] = ""; updates[`a${pNum}`] = -1; updates[`p${pNum}Score`] = 0;
+            await db.ref('rooms/' + curRoom).update(updates);
+        }
+        location.href = 'index.html';
     }
 
     const sC = document.getElementById('starsCont');
